@@ -61,7 +61,7 @@ function App() {
 
   const createNewSession = () => {
     setCurrentSessionId(Date.now().toString());
-    setMessages([{ role: 'system', text: 'ZNinja Ready.' }]);
+    setMessages([{ role: 'system', text: 'ZNinja is Ready.' }]);
     setShowHistory(false); 
   };
 
@@ -197,13 +197,13 @@ function App() {
       <div className={`absolute inset-y-0 left-0 top-10 w-64 bg-neutral-800 transform transition-transform duration-300 z-50 ${showHistory ? 'translate-x-0' : '-translate-x-full'} border-r border-neutral-700 flex flex-col`} style={{ WebkitAppRegion: 'no-drag' }}>
           <div className="p-4 border-b border-neutral-700 flex justify-between items-center">
               <span className="font-bold">History</span>
-              <button onClick={() => setShowHistory(false)} className="text-neutral-400 z-50 hover:text-white"><XIcon /></button>
+              <button onClick={() => setShowHistory(false)} className="text-neutral-400 z-50 hover:text-white hover:bg-neutral-700/50 rounded p-1 transition-colors duration-200"><XIcon /></button>
           </div>
           <div className="flex-1 overflow-y-auto">
               {sessions.map(session => (
                   <div 
                     key={session.id} 
-                    className={`p-3 border-b border-neutral-700 flex justify-between items-center group ${currentSessionId === session.id ? 'bg-neutral-700' : 'hover:bg-neutral-700'}`}
+                    className={`p-3 border-b border-neutral-700 flex justify-between items-center group transition-colors duration-200 ${currentSessionId === session.id ? 'bg-neutral-700' : 'hover:bg-neutral-600 hover:text-white'}`}
                   >
                       <div 
                         onClick={() => openSession(session)}
@@ -214,7 +214,7 @@ function App() {
                       <button 
                         onClick={(e) => deleteSession(e, session.id)}
                         className="opacity-0 group-hover:opacity-100 text-neutral-500 hover:text-red-400 px-2 py-1 z-10 transition-opacity"
-                        title="Delete Chat"
+                       
                       >
                           <TrashIcon />
                       </button>
@@ -233,19 +233,19 @@ function App() {
               <div className={`w-2 h-2 rounded-full ${isStealth ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
               
               {/* Toggle History Button */}
-              <button onClick={() => setShowHistory(!showHistory)} className="no-drag text-neutral-400 hover:text-white" style={{ WebkitAppRegion: 'no-drag' }}>
+              <button onClick={() => setShowHistory(!showHistory)} className="no-drag text-neutral-400 hover:text-white hover:bg-neutral-700/50 rounded p-1 transition-colors duration-200" style={{ WebkitAppRegion: 'no-drag' }}>
                   <ClockIcon />
               </button>
 
               {/* New Chat Button */}
-              <button onClick={createNewSession} className="no-drag text-neutral-400 hover:text-white" style={{ WebkitAppRegion: 'no-drag' }} title="New Chat">
+              <button onClick={createNewSession} className="no-drag text-neutral-400 hover:text-white hover:bg-neutral-700/50 rounded p-1 transition-colors duration-200" style={{ WebkitAppRegion: 'no-drag' }}>
                   <PlusIcon />
               </button>
 
               <select 
                 value={selectedModel}
                 onChange={(e) => setSelectedModel(e.target.value)}
-                className="bg-transparent text-xs text-neutral-400 font-mono focus:outline-none cursor-pointer no-drag w-24 sm:w-auto"
+                className="bg-transparent text-xs text-neutral-400 font-mono focus:outline-none cursor-pointer no-drag w-[130px] sm:w-auto"
                 style={{ WebkitAppRegion: 'no-drag' }}
               >
                 {availableModels.map(m => <option key={m} value={m} className="bg-neutral-800">{m}</option>)}
@@ -254,11 +254,11 @@ function App() {
             </div>
             
             <div className="flex items-center gap-2 no-drag" style={{ WebkitAppRegion: 'no-drag' }}>
-                <button onClick={toggleStealth} className="text-xs px-2 py-1 rounded bg-neutral-700 hover:bg-neutral-600">
-                    {isStealth ? 'Stealth ON' : 'Stealth OFF'}
+                <button onClick={toggleStealth} className="text-xs px-2 py-1 rounded bg-neutral-700 hover:bg-neutral-600 ring-1 ring-transparent hover:ring-neutral-500 transition-all duration-200">
+                    {isStealth ? 'Stealth is ON' : 'Stealth is OFF'}
                 </button>
-                <button onClick={() => window.electron?.minimize()} className="text-neutral-400 hover:text-green-400 p-1"><MinusIcon/></button>
-                <button onClick={() => window.electron?.closeApp()} className="text-neutral-400 hover:text-red-400 p-1"><XIcon /></button>
+                <button onClick={() => window.electron?.minimize()} className="text-neutral-400 hover:text-green-400 hover:bg-neutral-700/50 rounded p-1 transition-colors duration-200"><MinusIcon/></button>
+                <button onClick={() => window.electron?.closeApp()} className="text-neutral-400 hover:text-red-400 hover:bg-neutral-700/50 rounded p-1 transition-colors duration-200"><XIcon /></button>
             </div>
           </div>
 
@@ -285,13 +285,13 @@ function App() {
             ))}
           </div>
 
-          <form onSubmit={handleSend} className="p-3 py-2 bg-neutral-800/50">
+          <form onSubmit={handleSend} className="p-3 relative py-2 bg-neutral-800/50">
             <input
                 type="text"
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 placeholder="Ask ZNinja..."
-                className="w-full bg-neutral-900 border border-neutral-600 rounded px-3 py-2 text-sm focus:outline-none pr-10"
+                className="w-full bg-neutral-900 border border-neutral-600 rounded px-3 py-2 text-sm focus:outline-none focus:border-emerald-500 transition-colors duration-200 pr-10"
             />
             {attachment && (
                 <div className="absolute bottom-14 left-4 z-10 w-24 h-16 border border-neutral-600 bg-black rounded overflow-hidden shadow-lg group">
@@ -299,7 +299,7 @@ function App() {
                     <button 
                         type="button"
                         onClick={() => setAttachment(null)}
-                        className="absolute top-0 right-0 p-0.5 bg-red-600 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="absolute top-0 right-0 p-0.5 bg-red-600 text-white opacity-0 group-hover:opacity-100 hover:bg-red-500 transition-all duration-200"
                     >
                         <XIcon />
                     </button>
@@ -307,9 +307,9 @@ function App() {
             )}
              <button
                 type="button"
-                className="absolute right-5 bottom-8 text-neutral-400 hover:text-white"
+                className="absolute right-5 top-4 p-1 hover:bg-neutral-400/30 rounded-md text-neutral-200 transition-colors duration-200"
                 onClick={handleCapture}
-                title="Capture Screen"
+                
             >
                 <CameraIcon />
             </button>
