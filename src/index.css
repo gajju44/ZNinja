@@ -22,3 +22,7 @@ html, body {
 ::-webkit-scrollbar-thumb:hover {
   background: #6b7280;
 }
+
+*{
+  cursor: default !important;
+}

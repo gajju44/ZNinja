@@ -20,6 +20,9 @@ const TrashIcon = () => (
 const XIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
 );
+const CameraIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+);
 
 function App() {
   // ... existing state ...
@@ -28,6 +31,7 @@ function App() {
   const [currentSessionId, setCurrentSessionId] = useState(null);
   const [messages, setMessages] = useState([{ role: 'system', text: 'ZNinja is Ready.' }]);
   const [inputValue, setInputValue] = useState('');
+  const [attachment, setAttachment] = useState(null);
   const [showHistory, setShowHistory] = useState(false);
   
   // Dynamic model state
@@ -109,6 +113,18 @@ function App() {
     }
   };
 
+  const handleCapture = async () => {
+      if (window.electron && window.electron.captureScreen) {
+          const result = await window.electron.captureScreen();
+          if (result.success) {
+              setAttachment(result.image);
+          } else {
+              console.error(result.error);
+              setMessages(prev => [...prev, { role: 'ai', text: `Screen Capture Failed: ${result.error}` }]);
+          }
+      }
+  };
+
   const handleSend = (e) => {
     e.preventDefault();
     if (!inputValue.trim()) return;
@@ -116,13 +132,16 @@ function App() {
     if (!currentSessionId) setCurrentSessionId(Date.now().toString());
 
     const userPrompt = inputValue;
-    setMessages(prev => [...prev, { role: 'user', text: userPrompt }]);
+    const currentAttachment = attachment; // Capture current attachment
+    
+    setMessages(prev => [...prev, { role: 'user', text: userPrompt, image: currentAttachment }]);
     setInputValue('');
+    setAttachment(null);
     
     if (window.electron && window.electron.askGemini) {
       setMessages(prev => [...prev, { role: 'ai', text: 'Thinking...', isTemp: true }]);
       
-      window.electron.askGemini({ prompt: userPrompt, modelName: selectedModel }).then(result => {
+      window.electron.askGemini({ prompt: userPrompt, modelName: selectedModel, image: currentAttachment }).then(result => {
         setMessages(prev => {
           const filtered = prev.filter(m => !m.isTemp);
           return result.success 
@@ -136,6 +155,7 @@ function App() {
   // ... (components definition - unchanged) ...
   // Keeping existing component definitions for markdown renderer...
   const components = {
+    // ... existing components ...
     code({node, inline, className, children, ...props}) {
       const match = /language-(\w+)/.exec(className || '');
       return !inline && match ? (
@@ -247,6 +267,9 @@ function App() {
             {messages.map((msg, idx) => (
               <div key={idx} className={`text-sm flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                 <div className={`inline-block px-3 py-2 rounded-lg max-w-[90%] ${msg.role === 'user' ? 'bg-emerald-700' : 'bg-neutral-700'}`}>
+                  {msg.image && (
+                      <img src={msg.image} alt="Attachment" className="max-w-xs max-h-48 rounded mb-2 border border-neutral-600/50" />
+                  )}
                   {msg.role === 'ai' ? (
                      <ReactMarkdown 
                         remarkPlugins={[remarkGfm]}
@@ -268,8 +291,28 @@ function App() {
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 placeholder="Ask ZNinja..."
-                className="w-full bg-neutral-900 border border-neutral-600 rounded px-3 py-2 text-sm focus:outline-none"
+                className="w-full bg-neutral-900 border border-neutral-600 rounded px-3 py-2 text-sm focus:outline-none pr-10"
             />
+            {attachment && (
+                <div className="absolute bottom-14 left-4 z-10 w-24 h-16 border border-neutral-600 bg-black rounded overflow-hidden shadow-lg group">
+                    <img src={attachment} className="w-full h-full object-cover opacity-70" alt="Screen Capture" />
+                    <button 
+                        type="button"
+                        onClick={() => setAttachment(null)}
+                        className="absolute top-0 right-0 p-0.5 bg-red-600 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                        <XIcon />
+                    </button>
+                </div>
+            )}
+             <button
+                type="button"
+                className="absolute right-5 bottom-8 text-neutral-400 hover:text-white"
+                onClick={handleCapture}
+                title="Capture Screen"
+            >
+                <CameraIcon />
+            </button>
             <span className='text-xs w-full flex justify-center items-center pt-2'>powered by CInfinite, developed by <a href="https://github.com/gajju44" target="_blank" rel="noopener noreferrer">&nbsp;gajju44</a></span>
           </form>
       </div>

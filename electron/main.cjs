@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, desktopCapturer } = require('electron');
 const path = require('path');
 const os = require('os');
 const koffi = require('koffi');
@@ -92,7 +92,7 @@ function createWindow() {
         }
     });
 
-    ipcMain.handle('ask-gemini', async (event, { prompt, modelName }) => {
+    ipcMain.handle('ask-gemini', async (event, { prompt, modelName, image }) => {
         // List of models to try in order of preference
         // 2026 Update: Prioritize newer flash models, fall back to older ones
         const modelFallbacks = [
@@ -108,7 +108,23 @@ function createWindow() {
             try {
                 console.log(`Attempting Gemini (${modelId})...`);
                 const model = genAI.getGenerativeModel({ model: modelId });
-                const result = await model.generateContent(prompt);
+
+                let contentParts = [prompt];
+                if (image) {
+                    // Expecting image as "data:image/png;base64,..."
+                    const base64Data = image.split(',')[1];
+                    contentParts = [
+                        prompt,
+                        {
+                            inlineData: {
+                                data: base64Data,
+                                mimeType: "image/png"
+                            }
+                        }
+                    ];
+                }
+
+                const result = await model.generateContent(contentParts);
                 const response = await result.response;
                 const text = response.text();
                 // Return success immediately if one works
@@ -131,6 +147,27 @@ function createWindow() {
         }
 
         return { success: false, error: "All available models returned 404. Please check your API key permissions and region." };
+    });
+
+    ipcMain.handle('capture-screen', async () => {
+        try {
+            // Get screen sources. primary display is usually enough.
+            // fetching a slightly larger thumbnail to ensure quality, though desktops can be huge.
+            const sources = await desktopCapturer.getSources({
+                types: ['screen'],
+                thumbnailSize: { width: 1920, height: 1080 }
+            });
+
+            // Just grab the first screen for now (Primary)
+            const primarySource = sources[0];
+            if (primarySource) {
+                return { success: true, image: primarySource.thumbnail.toDataURL() };
+            }
+            return { success: false, error: "No screen source found" };
+        } catch (e) {
+            console.error('Screen capture error:', e);
+            return { success: false, error: e.message };
+        }
     });
 
     ipcMain.handle('toggle-stealth', (event, shouldEnable) => {
