@@ -100,9 +100,11 @@ function createWindow() {
         transparent: true, // Transparent background
         title: 'Service Host Runtime',
         alwaysOnTop: true, // Keep it visible to user
+        type: 'utility', // Hides from Apps list in Task Manager
+        show: false, // Start completely hidden
         hasShadow: false,
         icon: path.join(__dirname, '../resources/icon.png'),
-        skipTaskbar: false, // Start hidden from taskbar
+        skipTaskbar: true, // Start hidden from taskbar (Background process)
         webPreferences: {
             preload: path.join(__dirname, 'preload.cjs'), // Updated to points to .cjs
             nodeIntegration: false,
@@ -291,7 +293,7 @@ function createWindow() {
     });
 
     ipcMain.on('minimize-app', () => {
-        win.minimize();
+        win.hide();
     });
 
     ipcMain.on('close-app', () => {
@@ -372,11 +374,11 @@ app.whenReady().then(() => {
     const win = createWindow();
 
     globalShortcut.register('CommandOrControl+]', () => {
-        if (win.isMinimized()) {
-            win.restore();
-            win.focus();
+        if (win.isVisible()) {
+            win.hide();
         } else {
-            win.minimize();
+            win.show();
+            win.focus();
         }
     });
 
