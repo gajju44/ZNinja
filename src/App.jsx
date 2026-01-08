@@ -37,14 +37,24 @@ function App() {
   // Dynamic model state
   const [availableModels, setAvailableModels] = useState([]);
   const [selectedModel, setSelectedModel] = useState('gemini-1.5-flash-latest');
+  
+  // Setup State
+  const [isSetup, setIsSetup] = useState(false);
+  const [checkingKey, setCheckingKey] = useState(true);
+  const [setupKey, setSetupKey] = useState('');
+  const [setupError, setSetupError] = useState('');
 
   // ... (useEffect for models and history - unchanged) ...
-  useEffect(() => {
-    // Enforce initial stealth mode
-    // if (window.electron && window.electron.toggleStealth) {
-    //     window.electron.toggleStealth(true);
-    // }
 
+
+  const loadSessions = async () => {
+    if (window.electron?.getSessions) {
+      const savedSessions = await window.electron.getSessions();
+      setSessions(savedSessions);
+    }
+  };
+
+  const fetchModels = () => {
     if (window.electron && window.electron.listModels) {
       window.electron.listModels().then(result => {
         if (result.success && result.models.length > 0) {
@@ -55,14 +65,47 @@ function App() {
       });
     }
     loadSessions();
-  }, []);
+  };
 
-  const loadSessions = async () => {
-    if (window.electron?.getSessions) {
-      const savedSessions = await window.electron.getSessions();
-      setSessions(savedSessions);
+  const handleSaveKey = async (e) => {
+    e.preventDefault();
+    setSetupError('');
+    if (!setupKey.trim()) {
+        setSetupError('Please enter an API Key');
+        return;
+    }
+    
+    if (window.electron && window.electron.saveApiKey) {
+        const success = await window.electron.saveApiKey(setupKey.trim());
+        if (success) {
+            setIsSetup(true);
+            fetchModels();
+        } else {
+            setSetupError('Failed to save API Key');
+        }
     }
   };
+
+  useEffect(() => {
+    // Check for API Key
+    if (window.electron && window.electron.getApiKey) {
+        window.electron.getApiKey().then(key => {
+            if (key) {
+                setIsSetup(true);
+                // Initialize models only if key exists
+                fetchModels(); 
+            } else {
+                setIsSetup(false);
+            }
+            setCheckingKey(false);
+        });
+    } else {
+        // Fallback for non-electron env (dev w/o electron)
+        setCheckingKey(false);
+        setIsSetup(true);
+        fetchModels();
+    }
+  }, []);
 
   const createNewSession = () => {
     setCurrentSessionId(Date.now().toString());
@@ -194,6 +237,48 @@ function App() {
     th: ({children}) => <th className="px-3 py-2 text-left text-xs font-medium text-neutral-300 uppercase tracking-wider border-b border-neutral-600">{children}</th>,
     td: ({children}) => <td className="px-3 py-2 whitespace-nowrap text-neutral-300">{children}</td>,
   };
+
+
+
+  if (checkingKey) {
+      return <div className="flex h-screen items-center justify-center bg-neutral-900 text-white">Checking Configuration...</div>;
+  }
+
+  if (!isSetup) {
+      return (
+        <div className="flex h-screen items-center justify-center bg-neutral-900 text-white relative">
+            {/* Window Controls for Setup Screen */}
+            <div className="absolute top-2 right-2 flex gap-2 no-drag z-50">
+                 <button onClick={() => window.electron?.minimize()} className="text-neutral-400 hover:text-white p-1"><MinusIcon/></button>
+                 <button onClick={() => window.electron?.closeApp()} className="text-neutral-400 hover:text-red-500 p-1"><XIcon /></button>
+            </div>
+            
+            <div className="bg-neutral-800 p-8 rounded-xl shadow-2xl border border-neutral-700 w-96 transform transition-all cursor-default" style={{ WebkitAppRegion: 'drag' }}>
+                <h2 className="text-2xl font-bold mb-6 text-center text-emerald-500">Service Host Setup</h2>
+                <p className="text-neutral-400 text-sm mb-4 text-center">Please enter your Google Gemini API Key to continue.</p>
+                <form onSubmit={handleSaveKey} style={{ WebkitAppRegion: 'no-drag' }}>
+                    <input 
+                        type="password" 
+                        value={setupKey} 
+                        onChange={(e) => setSetupKey(e.target.value)} 
+                        placeholder="Paste API Key Here"
+                        className="w-full bg-neutral-900 border border-neutral-600 rounded px-4 py-3 text-sm focus:outline-none focus:border-emerald-500 transition-colors duration-200 mb-4"
+                    />
+                    {setupError && <div className="text-red-400 text-xs mb-4 text-center">{setupError}</div>}
+                    <button 
+                        type="submit" 
+                        className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded transition-colors duration-200"
+                    >
+                        Activate Runtime
+                    </button>
+                    <div className="mt-4 text-center">
+                        <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-xs text-blue-400 hover:underline">Get API Key</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+      );
+  }
 
   return (
     <div className="flex h-screen bg-neutral-900/90 text-white rounded-lg border border-neutral-700 shadow-2xl overflow-hidden backdrop-blur-sm relative">

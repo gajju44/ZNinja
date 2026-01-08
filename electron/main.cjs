@@ -33,10 +33,46 @@ if (!process.env.VITE_GEMINI) {
 }
 
 const { GoogleGenerativeAI } = require("@google/generative-ai");
+const fs = require('fs');
+
+// --- Config Management ---
+const configPath = path.join(app.getPath('userData'), 'config.json');
+
+function getApiKey() {
+    try {
+        if (fs.existsSync(configPath)) {
+            const data = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+            if (data.apiKey) return data.apiKey;
+        }
+    } catch (e) {
+        console.error("Error reading config:", e);
+    }
+    return process.env.VITE_GEMINI || null;
+}
+
+function saveApiKey(key) {
+    try {
+        let current = {};
+        if (fs.existsSync(configPath)) {
+            current = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+        }
+        current.apiKey = key;
+        fs.writeFileSync(configPath, JSON.stringify(current, null, 2));
+        return true;
+    } catch (e) {
+        console.error("Error saving config:", e);
+        return false;
+    }
+}
+
 
 // --- Gemini Setup ---
-// In a real app, use process.env.GEMINI_API_KEY
-const genAI = new GoogleGenerativeAI(process.env.VITE_GEMINI);
+// Helper to get authorized client
+function getGenAI() {
+    const key = getApiKey();
+    if (!key) throw new Error("API Key not found");
+    return new GoogleGenerativeAI(key);
+}
 // Model initialized dynamically in handler
 
 function createWindow() {
@@ -81,6 +117,7 @@ function createWindow() {
             // and act as a fallback to the catch block, which is the desired behavior for now.
             let models = [];
             // Attempt to list models if the method exists, otherwise simulate error or implement alternative
+            const genAI = getGenAI();
             if (typeof genAI.listModels === 'function') {
                 const result = await genAI.listModels();
                 models = result.models
@@ -113,6 +150,7 @@ function createWindow() {
             if (!modelId) continue;
             try {
                 console.log(`Attempting Gemini (${modelId})...`);
+                const genAI = getGenAI();
                 const model = genAI.getGenerativeModel({ model: modelId });
 
                 let contentParts = [prompt];
@@ -303,6 +341,9 @@ app.whenReady().then(() => {
     ipcMain.handle('clear-all-sessions', async () => {
         return saveSessions([]);
     });
+
+    ipcMain.handle('get-api-key', () => getApiKey());
+    ipcMain.handle('save-api-key', (event, key) => saveApiKey(key));
 
     const { globalShortcut } = require('electron');
 

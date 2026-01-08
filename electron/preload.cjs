@@ -11,4 +11,6 @@ contextBridge.exposeInMainWorld('electron', {
     captureScreen: () => ipcRenderer.invoke('capture-screen'),
     minimize: () => ipcRenderer.send('minimize-app'),
     closeApp: () => ipcRenderer.send('close-app'),
+    getApiKey: () => ipcRenderer.invoke('get-api-key'),
+    saveApiKey: (key) => ipcRenderer.invoke('save-api-key', key),
 });
