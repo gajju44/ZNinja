@@ -258,14 +258,15 @@ function App() {
             ))}
           </div>
 
-          <form onSubmit={handleSend} className="p-3 bg-neutral-800/50">
+          <form onSubmit={handleSend} className="p-3 py-2 bg-neutral-800/50">
             <input
                 type="text"
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
-                placeholder="Ask Gemini..."
+                placeholder="Ask ZNinja..."
                 className="w-full bg-neutral-900 border border-neutral-600 rounded px-3 py-2 text-sm focus:outline-none"
             />
+            <span className='text-xs w-full flex justify-center items-center pt-2'>powered by CInfinite</span>
           </form>
       </div>
     </div>
