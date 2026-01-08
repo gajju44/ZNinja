@@ -47,6 +47,7 @@ function createWindow() {
         transparent: true, // Transparent background
         alwaysOnTop: true, // Keep it visible to user
         hasShadow: false,
+        skipTaskbar: true, // Start hidden from taskbar
         webPreferences: {
             preload: path.join(__dirname, 'preload.cjs'), // Updated to points to .cjs
             nodeIntegration: false,
@@ -177,6 +178,9 @@ function createWindow() {
         }
 
         try {
+            console.log(`Setting Skip Taskbar to: ${shouldEnable}`);
+            win.setSkipTaskbar(shouldEnable);
+
             const hwndBuf = win.getNativeWindowHandle();
 
             // Electron returns a Buffer. We need the memory address (pointer value) stored INSIDE that buffer.
@@ -233,6 +237,8 @@ function createWindow() {
     ipcMain.on('close-app', () => {
         app.quit();
     });
+
+    return win;
 }
 
 app.whenReady().then(() => {
@@ -291,7 +297,22 @@ app.whenReady().then(() => {
         return saveSessions([]);
     });
 
-    createWindow();
+    const { globalShortcut } = require('electron');
+
+    app.on('will-quit', () => {
+        globalShortcut.unregisterAll();
+    });
+
+    const win = createWindow();
+
+    globalShortcut.register('CommandOrControl+]', () => {
+        if (win.isMinimized()) {
+            win.restore();
+            win.focus();
+        } else {
+            win.minimize();
+        }
+    });
 
     app.on('activate', () => {
         if (BrowserWindow.getAllWindows().length === 0) createWindow();
