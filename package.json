@@ -21,7 +21,11 @@
     "win": {
       "target": "nsis",
       "icon": "resources/icon.ico"
-    }
+    },
+    "files": [
+      "dist",
+      "electron"
+    ]
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",

@@ -62,7 +62,10 @@ function createWindow() {
     if (isDev) {
         win.loadURL('http://localhost:5173');
     } else {
-        win.loadFile(path.join(__dirname, '../dist/index.html'));
+        const indexPath = path.join(__dirname, '../dist/index.html');
+        console.log('Loading file from:', indexPath);
+        win.loadFile(indexPath);
+        // win.webContents.openDevTools();
     }
 
     // --- IPC Handlers ---
