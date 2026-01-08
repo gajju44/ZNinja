@@ -11,6 +11,9 @@ const ClockIcon = () => (
 const PlusIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
 );
+const MinusIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+);
 const TrashIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
 );
@@ -234,6 +237,7 @@ function App() {
                 <button onClick={toggleStealth} className="text-xs px-2 py-1 rounded bg-neutral-700 hover:bg-neutral-600">
                     {isStealth ? 'Stealth ON' : 'Stealth OFF'}
                 </button>
+                <button onClick={() => window.electron?.minimize()} className="text-neutral-400 hover:text-green-400 p-1"><MinusIcon/></button>
                 <button onClick={() => window.electron?.closeApp()} className="text-neutral-400 hover:text-red-400 p-1"><XIcon /></button>
             </div>
           </div>
@@ -266,7 +270,7 @@ function App() {
                 placeholder="Ask ZNinja..."
                 className="w-full bg-neutral-900 border border-neutral-600 rounded px-3 py-2 text-sm focus:outline-none"
             />
-            <span className='text-xs w-full flex justify-center items-center pt-2'>powered by CInfinite</span>
+            <span className='text-xs w-full flex justify-center items-center pt-2'>powered by CInfinite, developed by <a href="https://github.com/gajju44" target="_blank" rel="noopener noreferrer">&nbsp;gajju44</a></span>
           </form>
       </div>
     </div>

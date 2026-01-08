@@ -8,5 +8,6 @@ contextBridge.exposeInMainWorld('electron', {
     saveSession: (session) => ipcRenderer.invoke('save-session', session),
     deleteSession: (sessionId) => ipcRenderer.invoke('delete-session', sessionId),
     clearAllSessions: () => ipcRenderer.invoke('clear-all-sessions'),
+    minimize: () => ipcRenderer.send('minimize-app'),
     closeApp: () => ipcRenderer.send('close-app'),
 });

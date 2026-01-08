@@ -189,6 +189,10 @@ function createWindow() {
         }
     });
 
+    ipcMain.on('minimize-app', () => {
+        win.minimize();
+    });
+
     ipcMain.on('close-app', () => {
         app.quit();
     });
