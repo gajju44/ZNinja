@@ -23,6 +23,9 @@ const XIcon = () => (
 const CameraIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
 );
+const ResetIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+);
 
 function App() {
   // ... existing state ...
@@ -158,6 +161,17 @@ function App() {
     if (window.electron && window.electron.toggleStealth) {
       const result = await window.electron.toggleStealth(!isStealth);
       if (result !== undefined) setIsStealth(!isStealth); 
+    }
+  };
+
+  const handleClearKey = async () => {
+    if (confirm('Are you sure you want to reset the API Key?')) {
+        if (window.electron && window.electron.clearApiKey) {
+            await window.electron.clearApiKey();
+            setIsSetup(false);
+            setAvailableModels([]);
+            setSetupKey('');
+        }
     }
   };
 
@@ -330,6 +344,10 @@ function App() {
               {/* New Chat Button */}
               <button onClick={createNewSession} className="no-drag text-neutral-400 hover:text-white hover:bg-neutral-700/50 rounded p-1 transition-colors duration-200" style={{ WebkitAppRegion: 'no-drag' }}>
                   <PlusIcon />
+              </button>
+
+              <button onClick={handleClearKey} className="no-drag text-neutral-400 hover:text-white hover:bg-neutral-700/50 rounded p-1 transition-colors duration-200" style={{ WebkitAppRegion: 'no-drag' }}>
+                  <ResetIcon />
               </button>
 
               <select 

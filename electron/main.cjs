@@ -62,6 +62,23 @@ function saveApiKey(key) {
     } catch (e) {
         console.error("Error saving config:", e);
         return false;
+        return false;
+    }
+}
+
+function clearApiKey() {
+    try {
+        if (fs.existsSync(configPath)) {
+            const current = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+            if (current.apiKey) {
+                delete current.apiKey;
+                fs.writeFileSync(configPath, JSON.stringify(current, null, 2));
+            }
+        }
+        return true;
+    } catch (e) {
+        console.error("Error clearing config:", e);
+        return false;
     }
 }
 
@@ -344,6 +361,7 @@ app.whenReady().then(() => {
 
     ipcMain.handle('get-api-key', () => getApiKey());
     ipcMain.handle('save-api-key', (event, key) => saveApiKey(key));
+    ipcMain.handle('clear-api-key', () => clearApiKey());
 
     const { globalShortcut } = require('electron');
 
