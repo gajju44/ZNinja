@@ -103,6 +103,7 @@ function App() {
   // Dynamic model state
   const [availableModels, setAvailableModels] = useState([]);
   const [selectedModel, setSelectedModel] = useState('gemini-1.5-flash-latest');
+  const [showModelMenu, setShowModelMenu] = useState(false);
   
   // Setup State
   const [isSetup, setIsSetup] = useState(false);
@@ -472,15 +473,38 @@ function App() {
                   <ResetIcon />
               </button>
 
-              <select 
-                value={selectedModel}
-                onChange={(e) => setSelectedModel(e.target.value)}
-                className="bg-transparent text-xs text-neutral-400 font-mono focus:outline-none cursor-pointer no-drag w-[130px] sm:w-auto"
-                style={{ WebkitAppRegion: 'no-drag' }}
-              >
-                {availableModels.map(m => <option key={m} value={m} className="bg-neutral-800">{m}</option>)}
-                {availableModels.length === 0 && <option>{selectedModel}</option>}
-              </select>
+              <div className="relative flex items-center no-drag" style={{ WebkitAppRegion: 'no-drag' }}>
+                <button 
+                  onClick={() => setShowModelMenu(!showModelMenu)}
+                  className="bg-neutral-700/50 hover:bg-neutral-700 text-[10px] text-neutral-300 px-2 py-0.5 rounded border border-neutral-600 flex items-center gap-1 transition-all duration-200"
+                >
+                  <span className="font-mono">{selectedModel.split('/').pop()}</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={`transition-transform duration-200 ${showModelMenu ? 'rotate-180' : ''}`}><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </button>
+                
+                {showModelMenu && (
+                  <>
+                    <div className="fixed inset-0 z-[60]" onClick={() => setShowModelMenu(false)} />
+                    <div className="absolute top-full left-0 mt-1 py-1 bg-neutral-800 border border-neutral-700 rounded shadow-xl z-[70] min-w-[200px] max-h-48 overflow-y-auto">
+                      {availableModels.map(m => (
+                        <button
+                          key={m}
+                          onClick={() => {
+                            setSelectedModel(m);
+                            setShowModelMenu(false);
+                          }}
+                          className={`w-full text-left px-3 py-1.5 text-[10px] hover:bg-neutral-700 transition-colors ${selectedModel === m ? 'text-emerald-400 bg-neutral-700/30' : 'text-neutral-400'}`}
+                        >
+                          {m}
+                        </button>
+                      ))}
+                      {availableModels.length === 0 && (
+                        <div className="px-3 py-1.5 text-[10px] text-neutral-500 italic">No models found</div>
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
             
             <div className="flex items-center gap-2 no-drag" style={{ WebkitAppRegion: 'no-drag' }}>
