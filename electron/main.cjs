@@ -6,14 +6,17 @@ const koffi = require('koffi');
 // --- Native Bindings ---
 let SetWindowDisplayAffinity;
 let GetLastError;
+let GetAsyncKeyState;
 
 try {
     const user32 = koffi.load('user32.dll');
     const kernel32 = koffi.load('kernel32.dll');
 
     // SetWindowDisplayAffinity(HWND hWnd, DWORD dwAffinity)
-    // HWND is a pointer-sized integer.
     SetWindowDisplayAffinity = user32.func('__stdcall', 'SetWindowDisplayAffinity', 'bool', ['size_t', 'uint32']);
+
+    // GetAsyncKeyState(int vKey)
+    GetAsyncKeyState = user32.func('__stdcall', 'GetAsyncKeyState', 'int16', ['int32']);
 
     // GetLastError()
     GetLastError = kernel32.func('__stdcall', 'GetLastError', 'uint32', []);
@@ -62,7 +65,7 @@ function saveApiKey(key) {
     } catch (e) {
         console.error("Error saving config:", e);
         return false;
-        return false;
+
     }
 }
 
@@ -93,6 +96,16 @@ function getGenAI() {
 // Model initialized dynamically in handler
 
 function createWindow() {
+    const helperWin = new BrowserWindow({
+        width: 0,
+        height: 0,
+        show: false,
+        frame: false,
+        skipTaskbar: true,
+        focusable: false,
+        webPreferences: { nodeIntegration: false, contextIsolation: true }
+    });
+
     const win = new BrowserWindow({
         width: 600,
         height: 400,
@@ -100,8 +113,10 @@ function createWindow() {
         transparent: true, // Transparent background
         title: 'Service Host Runtime',
         alwaysOnTop: true, // Keep it visible to user
+        resizable: false, // Prevent resize cursor 100% of the time
         type: 'utility', // Hides from Apps list in Task Manager
         show: false, // Start completely hidden
+        parent: helperWin,
         hasShadow: false,
         icon: path.join(__dirname, '../resources/icon.png'),
         skipTaskbar: true, // Start hidden from taskbar (Background process)
@@ -110,6 +125,10 @@ function createWindow() {
             nodeIntegration: false,
             contextIsolation: true,
         },
+    });
+
+    win.on('closed', () => {
+        if (!helperWin.isDestroyed()) helperWin.close();
     });
 
     // Load Vite dev server or build
@@ -240,8 +259,8 @@ function createWindow() {
         }
 
         try {
-            console.log(`Setting Skip Taskbar to: ${shouldEnable}`);
-            win.setSkipTaskbar(shouldEnable);
+            console.log(`Ensuring Skip Taskbar remains active during stealth toggle`);
+            win.setSkipTaskbar(true);
 
             const hwndBuf = win.getNativeWindowHandle();
 
@@ -298,6 +317,23 @@ function createWindow() {
 
     ipcMain.on('close-app', () => {
         app.quit();
+    });
+
+    ipcMain.on('resize-window', (event, { width, height }) => {
+        // Enforce a sensible minimum to prevent invisibility
+        const w = Math.max(Math.floor(width), 200);
+        const h = Math.max(Math.floor(height), 150);
+
+        // State Toggle strategy: temporarily enable resizability to allow shrinking
+        // This won't trigger the cursor because it's too fast and only happens during programmatic drag
+        win.setResizable(true);
+        win.setSize(w, h);
+        win.setResizable(false);
+    });
+
+    ipcMain.handle('get-window-size', () => {
+        const [width, height] = win.getSize();
+        return { width, height };
     });
 
     return win;
@@ -361,6 +397,11 @@ app.whenReady().then(() => {
         return saveSessions([]);
     });
 
+    ipcMain.handle('set-focusable', (event, focusable) => {
+        win.setFocusable(focusable);
+        return true;
+    });
+
     ipcMain.handle('get-api-key', () => getApiKey());
     ipcMain.handle('save-api-key', (event, key) => saveApiKey(key));
     ipcMain.handle('clear-api-key', () => clearApiKey());
@@ -373,13 +414,92 @@ app.whenReady().then(() => {
 
     const win = createWindow();
 
+    // Clipboard Monitoring Loop
+    const { clipboard } = require('electron');
+    let lastClipboardText = '';
+    setInterval(() => {
+        const currentText = clipboard.readText();
+        if (currentText && currentText !== lastClipboardText) {
+            lastClipboardText = currentText;
+            win.webContents.send('clipboard-update', currentText);
+        }
+    }, 1000); // Check every second
+
+    // Ghost Typing Monitoring
+    let ghostTypingInterval = null;
+    ipcMain.handle('set-ghost-typing', (event, active) => {
+        if (active && !ghostTypingInterval) {
+            const keyStates = new Array(256).fill(false);
+            ghostTypingInterval = setInterval(() => {
+                if (!GetAsyncKeyState) return;
+
+                // Monitor A-Z (0x41-0x5A), 0-9 (0x30-0x39), Space (0x20), Backspace (0x08), Enter (0x0D)
+                const vKeys = [
+                    0x08, 0x0D, 0x20, // Backspace, Enter, Space
+                    ...Array.from({ length: 10 }, (_, i) => 0x30 + i), // 0-9
+                    ...Array.from({ length: 26 }, (_, i) => 0x41 + i), // A-Z
+                    0xBE, 0xBC, 0xBF, 0xBB, 0xBD, // . , / = -
+                ];
+
+                vKeys.forEach(vKey => {
+                    const state = GetAsyncKeyState(vKey);
+                    const isPressed = (state & 0x8000) !== 0;
+
+                    if (isPressed && !keyStates[vKey]) {
+                        keyStates[vKey] = true;
+                        win.webContents.send('ghost-key', { vKey, text: vKeyToChar(vKey, GetAsyncKeyState(0x10) !== 0) });
+                    } else if (!isPressed) {
+                        keyStates[vKey] = false;
+                    }
+                });
+            }, 30); // 30ms for responsive feeling
+        } else if (!active && ghostTypingInterval) {
+            clearInterval(ghostTypingInterval);
+            ghostTypingInterval = null;
+        }
+        return true;
+    });
+
+    function vKeyToChar(vKey, shift) {
+        if (vKey >= 0x41 && vKey <= 0x5A) return shift ? String.fromCharCode(vKey) : String.fromCharCode(vKey).toLowerCase();
+        if (vKey >= 0x30 && vKey <= 0x39) {
+            const symbols = [')', '!', '@', '#', '$', '%', '^', '&', '*', '('];
+            return shift ? symbols[vKey - 0x30] : String.fromCharCode(vKey);
+        }
+        if (vKey === 0x20) return ' ';
+        if (vKey === 0x08) return 'BACKSPACE';
+        if (vKey === 0x0D) return 'ENTER';
+        if (vKey === 0xBE) return shift ? '>' : '.';
+        if (vKey === 0xBC) return shift ? '<' : ',';
+        if (vKey === 0xBF) return shift ? '?' : '/';
+        if (vKey === 0xBB) return shift ? '+' : '=';
+        if (vKey === 0xBD) return shift ? '_' : '-';
+        return '';
+    }
+
     globalShortcut.register('CommandOrControl+]', () => {
         if (win.isVisible()) {
             win.hide();
         } else {
             win.show();
-            win.focus();
+            win.setSkipTaskbar(true);
+            // ONLY focus if the window is focusable (Ghost Mode is OFF)
+            if (win.isFocusable()) {
+                win.focus();
+            }
         }
+    });
+
+    globalShortcut.register('CommandOrControl+L', () => {
+        const nextFocusable = !win.isFocusable();
+        win.setFocusable(nextFocusable);
+        // We send 'locked' state to UI. Locked is TRUE if focusable is FALSE.
+        win.webContents.send('focus-changed', !nextFocusable);
+    });
+
+    globalShortcut.register('CommandOrControl+I', () => {
+        // Trigger Instant AI (Capture + Send)
+        win.webContents.send('instant-ai');
     });
 
     app.on('activate', () => {

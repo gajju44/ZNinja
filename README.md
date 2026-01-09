@@ -1,37 +1,59 @@
-# Stealth AI Assistant
+# 🥷 ZNinja - Service Host Runtime (v2.0.0)
 
-A "Cluely-like" desktop assistant built with Electron, React, and Vite.
-It features a **Stealth Mode** that makes the window invisible to screen capture tools (Zoom, OBS, Discord) while remaining visible to you.
+The ultimate stealth assistant. Designed to be invisible to monitoring software and seamless to use without ever leaving your browser.
 
-## Features
+---
 
-- **Always on Top Overlay**: Floats above other windows.
-- **Stealth Mode**: Uses `SetWindowDisplayAffinity` from `user32.dll` to hide from screen sharing.
-- **Mock AI Interface**: A dark-themed chat UI.
+## 🚀 Key Features
 
-## Setup
-1. create a .env file in root folder with VITE_GEMINI variable containing gemini api key.
-2.  Enable "Stealth Mode" in the app (Top-right toggle).
-3.  Start a screen share to verify the window is invisible to others.
+### 1. 🌑 Stealth Mode (Ninja Mode)
+**Visual:** `[ 🥷 Stealth ON ]` (Emerald Button)
+- **What it does:** Makes the app completely invisible to screen recordings, Zoom, OBS, and proctoring software.
+- **Why use it:** You can see the AI, but they can't.
 
-## Commands
+### 2. 👻 Ghost Mode (Focus Lock)
+**Visual:** `[ 🤍 Ghost ON ]` (Indigo Button)
+- **Shortcut:** `Ctrl + L`
+- **What it does:** Makes the window "click-through." You can click on the buttons in ZNinja, but the computer thinks you never left your browser.
+- **Why use it:** Prevents "Tab Changed" or "App Switched" alerts on exam websites.
 
-### Development
-Runs the Vite dev server and Electron app.
-```bash
-npm run dev
-```
+### 3. ⌨️ Ghost Typing (Background Input)
+**Visual:** `[ ⌨️ Type ON ]` (Amber Button)
+- **How it works:** When Ghost Mode is ON, this button appears.
+- **Action:** Click anywhere else (like your browser's search bar) and start typing. Your text will appear in ZNinja automatically.
+- **Why use it:** Input questions into the AI without the AI window ever getting "Focus."
 
-### Build
-Builds the production application (executable).
-```bash
-npm run build
-```
+### 4. 📸 Instant AI
+- **Shortcut:** `Ctrl + I`
+- **What it does:** Takes a silent screenshot and sends it to the AI along with your current text. 
+- **Easy Flow:** Type a question -> `Ctrl + I` -> Get answer.
 
-## Technical Details
+### 5. 📋 Clipboard Sync
+- **What it does:** Anything you copy (`Ctrl + C`) anywhere on your computer is automatically pasted into ZNinja's input box.
 
-This app uses `koffi` to call the Windows Native API:
-```javascript
-SetWindowDisplayAffinity(hwnd, 0x00000011); // WDA_EXCLUDEFROMCAPTURE
-```
-This flag ensures the window content is excluded from bit-block transfers, making it invisible to screen capture software.
+---
+
+## 🛠️ Advanced Stealth (Windows Only)
+
+- **Task Manager Hiding:** The app never appears in the "Apps" list. It stays hidden in **"Background processes"** as `Service Host Runtime`.
+- **Taskbar Stealth:** No icon appears on the taskbar. 
+- **Silent Resizer:** Resize the window by dragging the bottom-right corner. The cursor **will not change** to the resize symbol (total stealth).
+
+---
+
+## 📦 How to Use
+
+1. **Setup:** Add your Gemini API Key in the `.env` file (`VITE_GEMINI=your_key`).
+2. **Launch:** Run `npm run dev`.
+3. **Show/Hide:** Use `Ctrl + ]` to instantly show or hide the entire window.
+4. **Resizing:** Look for the tiny lines at the bottom-right corner to drag and resize.
+
+---
+
+## 💻 Tech Stack
+- **Frontend:** React + Vite + Tailwind CSS
+- **Backend:** Electron (Node.js)
+- **Native:** Windows API (koffi) for stealth affinity and global key monitoring.
+
+---
+*Powered by Cinfinite | Developed by gajju44*

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
@@ -23,9 +23,70 @@ const XIcon = () => (
 const CameraIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
 );
+const GhostIcon = ({ opacity = 1 }) => (
+  <svg width="14" height="14" viewBox="0 0 512 512" fill="currentColor" style={{ opacity }}>
+    <path d="M501.553,219.44c-5.838-5.481-14.279-7.182-21.787-4.379l-45.01,16.794c0.07-0.233,0.14-0.473,0.209-0.699 c7.058-15.38,11.026-32.47,11.026-50.499c0-66.914-54.25-121.164-121.164-121.164c-50.997,0-93.165,37.696-109.548,69.965 c-3.408,6.717-20.289,21.251-39.117,9.356c-18.829-11.887-31.237-33.341-44.599-54.514c-17.843-28.246-51.059-19.535-62.441,8.922 C42.36,160.12-38.173,202.661,21.551,207.693c35.677,3.012,60.95-16.352,71.355-23.782c10.412-7.431-2.974,26.764,17.842,31.22 c20.133,4.309,22.462-20.941,41.066,5.854c-24.528,40.134-65.408,65.408-105.922,92.777c-41.889,28.301-50.57,56.121,20.436,43.9 c30.77-5.303,33.644,1.7,19.574,9.48c-13.3,7.36-45.29,20.381-65.283,26.888c-19.085,6.219-14.264,36.85,32.843,32.502 c36.633-3.378,70.718-4.123,95.223-12.105c19.986-6.506,26.919-0.683,0.155,10.218c-59.684,24.318,13.386,53.52,137.337-12.78 c46.742-25.002,78.708-52.728,102.909-85.882c4.092,4.79,10.218,7.376,19.326,2.633c22.688-11.81,32.378,0.497,16.514,14.364 c-18.611,16.29-16.918,54.918,35.104,21.438c52.029-33.488,50.857-112.918,50.857-112.918 C514.854,234.045,507.392,224.929,501.553,219.44z M284.631,159.988c0,0,14.45,28.906,31.314,38.542 C274.996,222.607,258.139,179.259,284.631,159.988z M348.043,211.093c19.023-3.897,49.063-13.378,49.063-13.378 C406.028,222.243,372.579,253.463,348.043,211.093z" />
+  </svg>
+);
+const NinjaIcon = ({ opacity = 1 }) => (
+    <svg width="14" height="14" viewBox="0 -64 640 640" fill="currentColor" style={{ opacity }}>
+        <path d="M312 8C175 8 64 119 64 256s111 248 248 248 248-111 248-248c0-25.38-3.82-49.86-10.9-72.91l63.92 52.97L640 173.49l-98.2-10.89c-.65-1.6-1.31-3.19-2-4.77l94.89-40.43L595 61.64l-60.41 84.91C494.17 64.46 409.7 8 312 8zM191.99 256c0-9.3 4.1-17.5 10.5-23.4l-31-9.3c-8.5-2.5-13.3-11.5-10.7-19.9 2.5-8.5 11.4-13.2 19.9-10.7l80 24c8.5 2.5 13.3 11.5 10.7 19.9-2.1 6.9-8.4 11.4-15.3 11.4-.5 0-1.1-.2-1.7-.2.7 2.7 1.7 5.3 1.7 8.2 0 17.7-14.3 32-32 32s-32.1-14.3-32.1-32zm252.61-32.7l-31 9.3c6.3 5.8 10.5 14.1 10.5 23.4 0 17.7-14.3 32-32 32s-32-14.3-32-32c0-2.9.9-5.6 1.7-8.2-.6.1-1.1.2-1.7.2-6.9 0-13.2-4.5-15.3-11.4-2.5-8.5 2.3-17.4 10.7-19.9l80-24c8.4-2.5 17.4 2.3 19.9 10.7 2.5 8.5-2.3 17.4-10.8 19.9zm-265.19-52.28h262.56c42.35 0 54.97 49.74 53.8 83.99-1.18 34.83-41.79 72.53-72.23 72.53-61.58 0-73.62-40.25-112.85-40.28-39.23.03-51.27 40.28-112.85 40.28-30.44 0-71.05-37.7-72.23-72.53-1.17-34.25 11.45-83.99 53.8-83.99z"></path>
+    </svg>
+);
+const KeyboardIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect><line x1="6" y1="8" x2="6" y2="8"></line><line x1="10" y1="8" x2="10" y2="8"></line><line x1="14" y1="8" x2="14" y2="8"></line><line x1="18" y1="8" x2="18" y2="8"></line><line x1="6" y1="12" x2="6" y2="12"></line><line x1="10" y1="12" x2="10" y2="12"></line><line x1="14" y1="12" x2="14" y2="12"></line><line x1="18" y1="12" x2="18" y2="12"></line><line x1="7" y1="16" x2="17" y2="16"></line></svg>
+);
 const ResetIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
 );
+
+const ResizeHandle = () => {
+    const startX = useRef(0);
+    const startY = useRef(0);
+    const startWidth = useRef(0);
+    const startHeight = useRef(0);
+
+    const onMouseDown = async (e) => {
+        if (!window.electron?.getWindowSize) return;
+        
+        e.preventDefault();
+        const size = await window.electron.getWindowSize();
+        startX.current = e.screenX;
+        startY.current = e.screenY;
+        startWidth.current = size.width;
+        startHeight.current = size.height;
+
+        const onMouseMove = (moveEvent) => {
+            const deltaX = moveEvent.screenX - startX.current;
+            const deltaY = moveEvent.screenY - startY.current;
+            window.electron.resizeWindow(
+                Math.floor(startWidth.current + deltaX),
+                Math.floor(startHeight.current + deltaY)
+            );
+        };
+
+        const onMouseUp = () => {
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup', onMouseUp);
+        };
+
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+    };
+
+    return (
+        <div 
+            onMouseDown={onMouseDown}
+            className="absolute bottom-0 right-0 w-4 h-4 no-drag z-50 group"
+            style={{ 
+                WebkitAppRegion: 'no-drag',
+                cursor: 'default' // NO RESIZE CURSOR HERE
+            }}
+        >
+            <div className="absolute bottom-1 right-1 w-2 h-2 border-r-2 border-b-2 border-white/20 group-hover:border-white/40 transition-colors" />
+        </div>
+    );
+};
 
 function App() {
   // ... existing state ...
@@ -36,6 +97,8 @@ function App() {
   const [inputValue, setInputValue] = useState('');
   const [attachment, setAttachment] = useState(null);
   const [showHistory, setShowHistory] = useState(false);
+  const [isFocusLocked, setIsFocusLocked] = useState(false);
+  const [isGhostTyping, setIsGhostTyping] = useState(false);
   
   // Dynamic model state
   const [availableModels, setAvailableModels] = useState([]);
@@ -110,6 +173,56 @@ function App() {
     }
   }, []);
 
+  useEffect(() => {
+    let unsubs = [];
+    
+    if (window.electron) {
+        if (window.electron.onFocusChange) {
+            unsubs.push(window.electron.onFocusChange((locked) => {
+                setIsFocusLocked(locked);
+            }));
+        }
+
+        if (window.electron.onClipboardUpdate) {
+            unsubs.push(window.electron.onClipboardUpdate((text) => {
+                setInputValue(text);
+            }));
+        }
+
+        if (window.electron.onInstantAI) {
+            unsubs.push(window.electron.onInstantAI(async () => {
+                document.getElementById('instant-ai-trigger')?.click();
+            }));
+        }
+
+        if (window.electron.onGhostKey) {
+            unsubs.push(window.electron.onGhostKey((data) => {
+                if (data.text === 'BACKSPACE') {
+                    setInputValue(prev => prev.slice(0, -1));
+                } else if (data.text === 'ENTER') {
+                    document.getElementById('send-button')?.click();
+                } else {
+                    setInputValue(prev => prev + data.text);
+                }
+            }));
+        }
+    }
+
+    return () => {
+        unsubs.forEach(unsub => {
+            if (typeof unsub === 'function') unsub();
+        });
+    };
+  }, []);
+
+  const toggleGhostTyping = async () => {
+    if (window.electron && window.electron.setGhostTyping) {
+        const nextActive = !isGhostTyping;
+        await window.electron.setGhostTyping(nextActive);
+        setIsGhostTyping(nextActive);
+    }
+  };
+
   const createNewSession = () => {
     setCurrentSessionId(Date.now().toString());
     setMessages([{ role: 'system', text: 'ZNinja is Ready.' }]);
@@ -156,6 +269,15 @@ function App() {
     }
   }, [messages, currentSessionId]);
 
+
+  const toggleFocusLock = async () => {
+    if (window.electron && window.electron.setFocusable) {
+      const nextLocked = !isFocusLocked;
+      // We set focusable to FALSE when locked is TRUE
+      await window.electron.setFocusable(!nextLocked);
+      setIsFocusLocked(nextLocked);
+    }
+  };
 
   const toggleStealth = async () => {
     if (window.electron && window.electron.toggleStealth) {
@@ -362,8 +484,26 @@ function App() {
             </div>
             
             <div className="flex items-center gap-2 no-drag" style={{ WebkitAppRegion: 'no-drag' }}>
-                <button onClick={toggleStealth} className="text-xs px-2 py-1 rounded bg-neutral-700 hover:bg-neutral-600 ring-1 ring-transparent hover:ring-neutral-500 transition-all duration-200">
-                    {isStealth ? 'Stealth is ON' : 'Stealth is OFF'}
+               {isFocusLocked && <button 
+                  onClick={toggleGhostTyping} 
+                  className={`flex items-center gap-1.5 text-[10px] px-2 py-1 rounded transition-all duration-200 ${isGhostTyping ? 'bg-amber-600 text-white shadow-[0_0_10px_rgba(245,158,11,0.4)]' : 'bg-neutral-700 text-neutral-400 hover:bg-neutral-600'}`}
+                >
+                    <KeyboardIcon />
+                    <span className="hidden sm:inline font-bold uppercase tracking-wider">{isGhostTyping ? 'Type ON' : 'Type OFF'}</span>
+                </button>}
+                <button 
+                  onClick={toggleFocusLock} 
+                  className={`flex items-center gap-1.5 text-[10px] px-2 py-1 rounded transition-all duration-200 ${isFocusLocked ? 'bg-indigo-600 text-white shadow-[0_0_10px_rgba(79,70,229,0.4)]' : 'bg-neutral-700 text-neutral-400 hover:bg-neutral-600'}`}
+                >
+                    <GhostIcon opacity={isFocusLocked ? 1 : 0.5} />
+                    <span className="hidden sm:inline font-bold uppercase tracking-wider">{isFocusLocked ? 'Ghost ON' : 'Ghost OFF'}</span>
+                </button>
+                <button 
+                  onClick={toggleStealth} 
+                  className={`flex items-center gap-1.5 text-[10px] px-2 py-1 rounded transition-all duration-200 ${isStealth ? 'bg-emerald-600 text-white shadow-[0_0_10px_rgba(16,185,129,0.4)]' : 'bg-neutral-700 text-neutral-400 hover:bg-neutral-600'}`}
+                >
+                    <NinjaIcon opacity={isStealth ? 1 : 0.5} />
+                    <span className="hidden sm:inline font-bold uppercase tracking-wider">{isStealth ? 'Stealth ON' : 'Stealth OFF'}</span>
                 </button>
                 <button onClick={() => window.electron?.minimize()} className="text-neutral-400 hover:text-green-400 hover:bg-neutral-700/50 rounded p-1 transition-colors duration-200"><MinusIcon/></button>
                 <button onClick={() => window.electron?.closeApp()} className="text-neutral-400 hover:text-red-400 hover:bg-neutral-700/50 rounded p-1 transition-colors duration-200"><XIcon /></button>
@@ -396,6 +536,7 @@ function App() {
           <form onSubmit={handleSend} className="p-3 relative py-2 bg-neutral-800/50">
             <input
                 type="text"
+                id="main-input"
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 placeholder="Ask ZNinja..."
@@ -414,6 +555,11 @@ function App() {
                 </div>
             )}
              <button
+                type="submit"
+                id="send-button"
+                className="hidden"
+             />
+             <button
                 type="button"
                 className="absolute right-5 top-4 p-1 hover:bg-neutral-400/30 rounded-md text-neutral-200 transition-colors duration-200"
                 onClick={handleCapture}
@@ -422,7 +568,34 @@ function App() {
                 <CameraIcon />
             </button>
             <span className='text-xs w-full flex justify-center items-center pt-2'>powered by CInfinite, developed by <a href="https://github.com/gajju44" target="_blank" rel="noopener noreferrer">&nbsp;gajju44</a></span>
+            <button
+                id="instant-ai-trigger"
+                type="button"
+                className="hidden"
+                onClick={async () => {
+                    const result = await window.electron.captureScreen();
+                    if (result.success) {
+                        // Directly trigger Gemini with the captured image and current input
+                        if (window.electron && window.electron.askGemini) {
+                            const userPrompt = inputValue || "What's on my screen?";
+                            setMessages(prev => [...prev, { role: 'user', text: userPrompt, image: result.image }]);
+                            setInputValue('');
+                            setMessages(prev => [...prev, { role: 'ai', text: 'Thinking...', isTemp: true }]);
+                            
+                            window.electron.askGemini({ prompt: userPrompt, modelName: selectedModel, image: result.image }).then(res => {
+                                setMessages(prev => {
+                                    const filtered = prev.filter(m => !m.isTemp);
+                                    return res.success 
+                                        ? [...filtered, { role: 'ai', text: res.text }]
+                                        : [...filtered, { role: 'ai', text: `Error: ${res.error}` }];
+                                });
+                            });
+                        }
+                    }
+                }}
+            />
           </form>
+          <ResizeHandle />
       </div>
     </div>
   );

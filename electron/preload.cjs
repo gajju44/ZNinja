@@ -14,4 +14,28 @@ contextBridge.exposeInMainWorld('electron', {
     getApiKey: () => ipcRenderer.invoke('get-api-key'),
     saveApiKey: (key) => ipcRenderer.invoke('save-api-key', key),
     clearApiKey: () => ipcRenderer.invoke('clear-api-key'),
+    setFocusable: (focusable) => ipcRenderer.invoke('set-focusable', focusable),
+    onFocusChange: (callback) => {
+        const subscription = (event, value) => callback(value);
+        ipcRenderer.on('focus-changed', subscription);
+        return () => ipcRenderer.removeListener('focus-changed', subscription);
+    },
+    onInstantAI: (callback) => {
+        const subscription = () => callback();
+        ipcRenderer.on('instant-ai', subscription);
+        return () => ipcRenderer.removeListener('instant-ai', subscription);
+    },
+    onClipboardUpdate: (callback) => {
+        const subscription = (event, text) => callback(text);
+        ipcRenderer.on('clipboard-update', subscription);
+        return () => ipcRenderer.removeListener('clipboard-update', subscription);
+    },
+    setGhostTyping: (active) => ipcRenderer.invoke('set-ghost-typing', active),
+    onGhostKey: (callback) => {
+        const subscription = (event, data) => callback(data);
+        ipcRenderer.on('ghost-key', subscription);
+        return () => ipcRenderer.removeListener('ghost-key', subscription);
+    },
+    resizeWindow: (width, height) => ipcRenderer.send('resize-window', { width, height }),
+    getWindowSize: () => ipcRenderer.invoke('get-window-size'),
 });
