@@ -55,6 +55,24 @@ const CheckIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
 );
 
+const DEFAULT_PERSONA = `**Role:** You are ZNinja, an elite Senior Software Engineer and Expert Competitive Programmer. 
+**Goal:** Provide precise, bug-free, and high-performance code with optimal time/space complexity.
+
+**Operational Protocol:**
+1. **Deep Analysis:** Before writing code, analyze the problem text for "hidden" constraints. (e.g., Is it a subarray or a prefix? Is the input space-separated or a string? Are there negative numbers?)
+2. **Constraint-Driven Design:** Explicitly check the constraints (N). 
+   - If N <= 500, O(N²) is acceptable. 
+   - If N >= 10^5, aim for O(N) or O(N log N).
+3. **Strict Adherence:** Follow all variable naming requirements (e.g., 'nexorviant') and use the exact data types requested.
+4. **Residue Protection:** Do not hallucinate logic from similar-sounding problems. If a problem is unique, solve it from first principles.
+5. **Modern Standards:** Use idiomatic Java/Python/C++ best practices (e.g., long for sums to avoid overflow, HashSet for O(1) lookups).
+6. **Conciseness:** Keep the code "packed"—minimal lines without sacrificing readability or safety.
+
+**Output Format:**
+- Start with a brief 1-sentence logic summary.
+- Provide the final, ready-to-paste solution.
+- End with the Big O complexity analysis.`;
+
 const ResizeHandle = () => {
     const startX = useRef(0);
     const startY = useRef(0);
@@ -98,7 +116,7 @@ const ResizeHandle = () => {
                 cursor: 'default' // NO RESIZE CURSOR HERE
             }}
         >
-            <div className="absolute bottom-1 right-1 w-2 h-2 border-r-2 border-b-2 border-white/20 group-hover:border-white/40 transition-colors" />
+            <div className="absolute bottom-1 right-1 w-2 h-2 border-r-2 border-b-2 border-white/40 group-hover:border-white/90 transition-colors" />
         </div>
     );
 };
@@ -204,7 +222,7 @@ const AutoResizeTextarea = ({ value, onChange, onEnterPress, placeholder }) => {
             className="absolute bottom-[6px] -left-0  flex justify-center items-center  transition-opacity duration-200 group rounded"
             
         >
-            <svg className='rotate-90 group-hover:opacity-100 opacity-40 w-6 h-6 ' width="64px" height="64px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M10 20L20 20L20 10" stroke="#ffffff"></path> <path d="M12 17L17 17L17 12" stroke="#ffffff"></path> </g></svg>
+            <svg className='rotate-90 group-hover:opacity-100 opacity-60 transition-all duration-400 w-6 h-6 ' width="64px" height="64px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M10 20L20 20L20 10" stroke="#ffffff"></path> <path d="M12 17L17 17L17 12" stroke="#ffffff"></path> </g></svg>
         </div>
       </div>
     );
@@ -233,23 +251,7 @@ function App() {
   const [isSetup, setIsSetup] = useState(false);
   const [checkingKey, setCheckingKey] = useState(true);
   const [setupKey, setSetupKey] = useState('');
-  const [setupRole, setSetupRole] = useState(`**Role:** You are ZNinja, an elite Senior Software Engineer and Expert Competitive Programmer. 
-**Goal:** Provide precise, bug-free, and high-performance code with optimal time/space complexity.
-
-**Operational Protocol:**
-1. **Deep Analysis:** Before writing code, analyze the problem text for "hidden" constraints. (e.g., Is it a subarray or a prefix? Is the input space-separated or a string? Are there negative numbers?)
-2. **Constraint-Driven Design:** Explicitly check the constraints (N). 
-   - If N <= 500, O(N²) is acceptable. 
-   - If N >= 10^5, aim for O(N) or O(N log N).
-3. **Strict Adherence:** Follow all variable naming requirements (e.g., 'nexorviant') and use the exact data types requested.
-4. **Residue Protection:** Do not hallucinate logic from similar-sounding problems. If a problem is unique, solve it from first principles.
-5. **Modern Standards:** Use idiomatic Java/Python/C++ best practices (e.g., long for sums to avoid overflow, HashSet for O(1) lookups).
-6. **Conciseness:** Keep the code "packed"—minimal lines without sacrificing readability or safety.
-
-**Output Format:**
-- Start with a brief 1-sentence logic summary.
-- Provide the final, ready-to-paste solution.
-- End with the Big O complexity analysis.`);
+  const [setupRole, setSetupRole] = useState(DEFAULT_PERSONA);
   const [setupError, setSetupError] = useState('');
 
   // ... (useEffect for models and history - unchanged) ...
@@ -569,7 +571,16 @@ function App() {
                     />
                     
                     <div className="mb-4">
-                        <label className="block text-xs text-neutral-400 mb-1 ml-1 uppercase font-bold tracking-wider">AI Persona (System Instruction)</label>
+                        <div className="flex justify-between items-center mb-1">
+                            <label className="block text-xs text-neutral-400 uppercase font-bold tracking-wider ml-1">AI Persona (System Instruction)</label>
+                            <button 
+                                type="button" 
+                                onClick={() => setSetupRole(DEFAULT_PERSONA)}
+                                className="text-[10px] text-emerald-500 hover:text-emerald-400 underline"
+                            >
+                                Use Default
+                            </button>
+                        </div>
                         <textarea
                             value={setupRole}
                             onChange={(e) => setSetupRole(e.target.value)}
@@ -590,6 +601,7 @@ function App() {
                     </div>
                 </form>
             </div>
+            <ResizeHandle />
         </div>
       );
   }
