@@ -661,6 +661,7 @@ app.whenReady().then(() => {
     ipcMain.handle('set-ghost-typing', (event, active) => {
         if (active && !ghostTypingInterval) {
             const keyStates = new Array(256).fill(false);
+            const keyCounters = new Array(256).fill(0);
             ghostTypingInterval = setInterval(() => {
                 if (!GetAsyncKeyState) return;
 
@@ -676,11 +677,24 @@ app.whenReady().then(() => {
                     const state = GetAsyncKeyState(vKey);
                     const isPressed = (state & 0x8000) !== 0;
 
-                    if (isPressed && !keyStates[vKey]) {
-                        keyStates[vKey] = true;
-                        win.webContents.send('ghost-key', { vKey, text: vKeyToChar(vKey, GetAsyncKeyState(0x10) !== 0) });
-                    } else if (!isPressed) {
+                    if (isPressed) {
+                        if (!keyStates[vKey]) {
+                            // Initial Press
+                            keyStates[vKey] = true;
+                            keyCounters[vKey] = 0;
+                            win.webContents.send('ghost-key', { vKey, text: vKeyToChar(vKey, GetAsyncKeyState(0x10) !== 0) });
+                        } else {
+                            // Key Held Down - Repeat Logic
+                            keyCounters[vKey]++;
+                            // Initial delay: 15 ticks * 30ms = 450ms
+                            // Repeat rate: 2 ticks * 30ms = 60ms
+                            if (keyCounters[vKey] > 15 && (keyCounters[vKey] - 15) % 2 === 0) {
+                                win.webContents.send('ghost-key', { vKey, text: vKeyToChar(vKey, GetAsyncKeyState(0x10) !== 0) });
+                            }
+                        }
+                    } else {
                         keyStates[vKey] = false;
+                        keyCounters[vKey] = 0;
                     }
                 });
             }, 30); // 30ms for responsive feeling
