@@ -48,6 +48,9 @@ const ClipboardIcon = ({ opacity = 1 }) => (
 const SendIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11.5003 12H5.41872M5.24634 12.7972L4.24158 15.7986C3.69128 17.4424 3.41613 18.2643 3.61359 18.7704C3.78506 19.21 4.15335 19.5432 4.6078 19.6701C5.13111 19.8161 5.92151 19.4604 7.50231 18.7491L17.6367 14.1886C19.1797 13.4942 19.9512 13.1471 20.1896 12.6648C20.3968 12.2458 20.3968 11.7541 20.1896 11.3351C19.9512 10.8529 19.1797 10.5057 17.6367 9.81135L7.48483 5.24303C5.90879 4.53382 5.12078 4.17921 4.59799 4.32468C4.14397 4.45101 3.77572 4.78336 3.60365 5.22209C3.40551 5.72728 3.67772 6.54741 4.22215 8.18767L5.24829 11.2793C5.34179 11.561 5.38855 11.7019 5.407 11.8459C5.42338 11.9738 5.42321 12.1032 5.40651 12.231C5.38768 12.375 5.34057 12.5157 5.24634 12.7972Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"></path></svg>
 );
+const BrainIcon = ({ opacity = 1 }) => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity }}><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/></svg>
+);
 
 const ResizeHandle = () => {
     const startX = useRef(0);
@@ -109,6 +112,7 @@ function App() {
   const [isFocusLocked, setIsFocusLocked] = useState(false);
   const [isGhostTyping, setIsGhostTyping] = useState(false);
   const [isClipboardSync, setIsClipboardSync] = useState(false);
+  const [isSmartMode, setIsSmartMode] = useState(true); // Default to Smart Mode ON
   
   // Dynamic model state
   const [availableModels, setAvailableModels] = useState([]);
@@ -385,9 +389,13 @@ function App() {
             parts: [{ text: m.text }]
         }));
 
+      // If Smart Mode is on, we override the selected model with the 'smart' flag
+      // effectively passing 'zninja-auto-smart' as the modelName (or specific implementation choice)
+      const actualModel = isSmartMode ? 'zninja-auto-smart' : selectedModel;
+
       window.electron.askGemini({ 
           prompt: userPrompt, 
-          modelName: selectedModel, 
+          modelName: actualModel, 
           image: currentAttachment,
           history: history // Send history
       }).then(result => {
@@ -591,6 +599,15 @@ function App() {
                     <KeyboardIcon />
                     <span className="hidden sm:inline font-bold uppercase tracking-wider">{isGhostTyping ? 'Type ON' : 'Type OFF'}</span>
                 </button>}
+                <button 
+                  onClick={() => setIsSmartMode(!isSmartMode)} 
+                  className={`flex items-center gap-1.5 text-[10px] px-2 py-1 rounded transition-all duration-200 ${isSmartMode ? 'bg-fuchsia-600 text-white shadow-[0_0_10px_rgba(192,38,211,0.4)]' : 'bg-neutral-700 text-neutral-400 hover:bg-neutral-600'}`}
+                  title="Smart Auto-Model"
+                >
+                    <BrainIcon />
+                    <span className="hidden sm:inline font-bold uppercase tracking-wider">{isSmartMode ? 'Smart select ON' : 'Smart select OFF'}</span>
+                </button>
+
                 <button 
                   onClick={toggleFocusLock} 
                   className={`flex items-center gap-1.5 text-[10px] px-2 py-1 rounded transition-all duration-200 ${isFocusLocked ? 'bg-indigo-600 text-white shadow-[0_0_10px_rgba(79,70,229,0.4)]' : 'bg-neutral-700 text-neutral-400 hover:bg-neutral-600'}`}

@@ -127,6 +127,43 @@ function getGenAI() {
     const key = getApiKey();
     if (!key) throw new Error("API Key not found");
     return new GoogleGenerativeAI(key);
+    return new GoogleGenerativeAI(key);
+}
+
+// Helper to detect if key is Paid (Plyceholder for now)
+let isProCached = null; // Cache the result so we don't waste tokens
+
+async function checkTierInternal() {
+    /* 
+    USE THIS WHEN ENABLING FOR PRO API:
+    // Return cached result if already checked this session
+    if (isProCached !== null) return isProCached;
+
+    try {
+        const genAI = getGenAI();
+        // We use a tiny, 1-token request to a Pro model with a Tool enabled.
+        // Free keys will throw a PERMISSION_DENIED or INVALID_ARGUMENT error for the tool.
+        const model = genAI.getGenerativeModel({ model: "gemini-3-pro-preview" });
+        
+        await model.generateContent({
+            contents: [{ role: 'user', parts: [{ text: 't' }] }],
+            tools: [{ googleSearch: {} }], // Paid-only tool on most Pro models
+            generationConfig: { maxOutputTokens: 1 }
+        });
+
+        console.log("ZNinja Intelligence: Paid Tier Detected. Unlocking HIGH Thinking.");
+        isProCached = true;
+        return true;
+    } catch (e) {
+        // If it fails because of the tool or the model, it's a Free Tier key.
+        console.log("ZNinja Intelligence: Free Tier detected. Using MEDIUM Thinking.");
+        isProCached = false;
+        return false;
+    }
+    */
+
+    // Use old function for now
+    return false;
 }
 // Model initialized dynamically in handler
 
@@ -230,12 +267,41 @@ function createWindow() {
     });
 
     ipcMain.handle('ask-gemini', async (event, { prompt, modelName, image, history = [] }) => {
+        let smartFallbacks = [];
+        const isPro = await checkTierInternal(); // Recommended: Helper to detect if key is Paid
+
+        // --- 2026 SMART ROUTER LOGIC ---
+        if (modelName === 'zninja-auto-smart') {
+            const lowerPrompt = prompt.toLowerCase();
+            const codingKeywords = ['code', 'fix', 'api', 'o(n)', 'implementation', 'logic', 'algorithm'];
+            const isComplex = image || codingKeywords.some(k => lowerPrompt.includes(k)) || prompt.length > 300;
+
+            if (isComplex) {
+                console.log("ZNinja Router: Complex/Coding detected.");
+                // 2026 Standard: Gemini 3 Flash is better at coding than 1.5 Pro was.
+                smartFallbacks = [
+                    "gemini-3-flash-preview", // Best logic for Free/Pro in 2026
+                    "gemini-3-pro-preview",    // Deep Think (May hit free limits fast)
+                    "gemini-2.5-pro"           // Stable Fallback
+                ];
+            } else {
+                console.log("ZNinja Router: Simple Chat detected.");
+                smartFallbacks = [
+                    "gemini-2.5-flash-lite",   // 2026 Speed King (30 RPM on Free)
+                    "gemini-3-flash-preview",
+                    "gemini-2.5-flash"
+                ];
+            }
+            modelName = smartFallbacks[0];
+        }
         // List of models to try in order of preference
         // 2026 Update: Prioritize newer flash models, fall back to older ones
+        // If Smart Mode generated specific fallbacks, put them FIRST.
         const modelFallbacks = [
+            ...smartFallbacks,
             modelName,
-            "gemini-2.0-flash-thinking-exp", // Try experimental thinking first if requested/available
-            "gemini-3-flash", // 2026 Stability Fallback
+            "gemini-2.0-flash-thinking-exp",
+            "gemini-3-flash",
             "gemini-2.5-flash",
             "gemini-1.5-pro",
             "gemini-1.5-flash-002",
