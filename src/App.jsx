@@ -349,6 +349,13 @@ function App() {
         if (window.electron.onFocusChange) {
             unsubs.push(window.electron.onFocusChange((locked) => {
                 setIsFocusLocked(locked);
+                if (!locked) {
+                    // Auto-disable ghost typing when exiting ghost mode
+                    setIsGhostTyping(false);
+                    if (window.electron.setGhostTyping) {
+                        window.electron.setGhostTyping(false);
+                    }
+                }
             }));
         }
 
@@ -482,12 +489,18 @@ function App() {
 
 
   const toggleFocusLock = async () => {
-    if (window.electron && window.electron.setFocusable) {
-      const nextLocked = !isFocusLocked;
-      // We set focusable to FALSE when locked is TRUE
-      await window.electron.setFocusable(!nextLocked);
-      setIsFocusLocked(nextLocked);
-    }
+      if (window.electron && window.electron.setFocusable) {
+          const nextLocked = !isFocusLocked;
+          const focusable = !nextLocked;
+          await window.electron.setFocusable(focusable);
+          setIsFocusLocked(nextLocked);
+          
+          if (!nextLocked) {
+              // Auto-disable ghost typing when manually unlocking
+              setIsGhostTyping(false);
+              await window.electron.setGhostTyping(false);
+          }
+      }
   };
 
   const toggleStealth = async () => {
