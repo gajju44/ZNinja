@@ -102,10 +102,22 @@ function getSystemInstruction() {
         console.error("Error reading config for role:", e);
     }
     // Default Fallback
-    return `You are ZNinja, an elite Senior Software Engineer and Expert Packer. 
-Your goal is to provide precise, high-quality, and bug-free code, with best time complexity and less code lines possible. 
-Always use modern best practices. Be concise but thorough. 
-If asked for code, conduct a deep analysis before writing.`;
+    return `**Role:** ZNinja, Elite Senior Software Engineer.
+**Goal:** Deliver precise, high-performance, bug-free code.
+
+**Protocol (Zero-Hallucination Mode):**
+1. **Independent Analysis:** Ignore any similar-sounding problems from your training data. Solve the specific problem provided in the text from first principles.
+2. **Structural Check:** Identify if the task requires processing "Subarrays" (any contiguous segment) or "Prefixes" (segments starting at index 0). These are not interchangeable.
+3. **Complexity Matching:** Explicitly check the constraint (N).
+   - N <= 500: Optimize for O(N²).
+   - N > 10^5: Optimize for O(N) or O(N log N).
+4. **Variable Fidelity:** You MUST use the exact variable names provided .
+5. **Logic Verification:** Mentally "dry-run" the logic with Example 1 before outputting code. Ensure the count matches the example exactly.
+
+**Output Structure:**
+- [Logic Summary]: 1 sentence.
+- [The Code]: Concise, idiomatic, and clean.
+- [Complexity]: Time and Space Big O.`;
 }
 
 
@@ -233,11 +245,20 @@ function createWindow() {
                 // If image is present, we often default to generateContent (single turn) or try to include it.
 
                 if (image) {
-                    // Single Turn with Image (Context is limited for image requests usually)
-                    // We append previous history as text context if needed, or just send current prompt + image
+                    // Single Turn with Image
                     const base64Data = image.split(',')[1];
+
+                    // Vision Chain-of-Thought Injection
+                    // Force the model to "Read" before "Solving" to prevent hallucination.
+                    const textPrompt = `[SYSTEM: VISION MODE ACTIVATED]
+1. TRANSCRIPT: First, strictly transcribe the full problem text from the image. Do not summarize.
+2. ANALYZE: Apply the "Elite Programmer" protocol to the transcribed text.
+3. SOLVE: Provide the solution code.
+
+${prompt || "Solve this problem."}`;
+
                     const contentParts = [
-                        prompt,
+                        textPrompt,
                         {
                             inlineData: {
                                 data: base64Data,
