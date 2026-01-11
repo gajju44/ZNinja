@@ -59,7 +59,14 @@ function saveApiKey(key) {
         if (fs.existsSync(configPath)) {
             current = JSON.parse(fs.readFileSync(configPath, 'utf8'));
         }
-        current.apiKey = key;
+        // Support saving both key and role
+        if (typeof key === 'object') {
+            if (key.key) current.apiKey = key.key;
+            if (key.role) current.systemInstruction = key.role;
+        } else {
+            current.apiKey = key;
+        }
+
         fs.writeFileSync(configPath, JSON.stringify(current, null, 2));
         return true;
     } catch (e) {
@@ -83,6 +90,22 @@ function clearApiKey() {
         console.error("Error clearing config:", e);
         return false;
     }
+}
+
+function getSystemInstruction() {
+    try {
+        if (fs.existsSync(configPath)) {
+            const data = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+            if (data.systemInstruction) return data.systemInstruction;
+        }
+    } catch (e) {
+        console.error("Error reading config for role:", e);
+    }
+    // Default Fallback
+    return `You are ZNinja, an elite Senior Software Engineer and Expert Packer. 
+Your goal is to provide precise, high-quality, and bug-free code, with best time complexity and less code lines possible. 
+Always use modern best practices. Be concise but thorough. 
+If asked for code, conduct a deep analysis before writing.`;
 }
 
 
@@ -189,10 +212,7 @@ function createWindow() {
             "gemini-1.5-flash"
         ].filter((v, i, a) => v && a.indexOf(v) === i); // Remove duplicates and nulls
 
-        const systemInstruction = `You are ZNinja, an elite Senior Software Engineer and Expert Packer. 
-Your goal is to provide precise, high-quality, and bug-free code, with best time complexity and less code lines possible. 
-Always use modern best practices. Be concise but thorough. 
-If asked for code, conduct a deep analysis before writing.`;
+        const systemInstruction = getSystemInstruction();
 
         for (const modelId of modelFallbacks) {
             if (!modelId) continue;
@@ -430,9 +450,21 @@ app.whenReady().then(() => {
         return true;
     });
 
-    ipcMain.handle('get-api-key', () => getApiKey());
-    ipcMain.handle('save-api-key', (event, key) => saveApiKey(key));
-    ipcMain.handle('clear-api-key', () => clearApiKey());
+    ipcMain.handle('save-api-key', (event, data) => { // Updated to accept data object
+        return saveApiKey(data);
+    });
+
+    ipcMain.handle('get-api-key', () => {
+        return getApiKey();
+    });
+
+    ipcMain.handle('get-role', () => {
+        return getSystemInstruction();
+    });
+
+    ipcMain.handle('clear-api-key', () => {
+        return clearApiKey();
+    });
 
     const { globalShortcut } = require('electron');
 

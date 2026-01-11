@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+import 'katex/dist/katex.min.css';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
@@ -116,6 +119,10 @@ function App() {
   const [isSetup, setIsSetup] = useState(false);
   const [checkingKey, setCheckingKey] = useState(true);
   const [setupKey, setSetupKey] = useState('');
+  const [setupRole, setSetupRole] = useState(`You are ZNinja, an elite Senior Software Engineer and Expert Packer. 
+Your goal is to provide precise, high-quality, and bug-free code, with best time complexity and less code lines possible. 
+Always use modern best practices. Be concise but thorough. 
+If asked for code, conduct a deep analysis before writing.`);
   const [setupError, setSetupError] = useState('');
 
   // ... (useEffect for models and history - unchanged) ...
@@ -149,8 +156,10 @@ function App() {
         return;
     }
     
+    
     if (window.electron && window.electron.saveApiKey) {
-        const success = await window.electron.saveApiKey(setupKey.trim());
+        // Pass both key and role
+        const success = await window.electron.saveApiKey({ key: setupKey.trim(), role: setupRole.trim() });
         if (success) {
             setIsSetup(true);
             fetchModels();
@@ -172,6 +181,13 @@ function App() {
                 setIsSetup(false);
             }
             setCheckingKey(false);
+            
+            // Also fetch the role
+            if (window.electron.getRole) {
+                window.electron.getRole().then(role => {
+                    if (role) setSetupRole(role);
+                });
+            }
         });
     } else {
         // Fallback for non-electron env (dev w/o electron)
@@ -425,6 +441,17 @@ function App() {
                         placeholder="Paste API Key Here"
                         className="w-full bg-neutral-900 border border-neutral-600 rounded px-4 py-3 text-sm focus:outline-none focus:border-emerald-500 transition-colors duration-200 mb-4"
                     />
+                    
+                    <div className="mb-4">
+                        <label className="block text-xs text-neutral-400 mb-1 ml-1 uppercase font-bold tracking-wider">AI Persona (System Instruction)</label>
+                        <textarea
+                            value={setupRole}
+                            onChange={(e) => setSetupRole(e.target.value)}
+                            placeholder="Define who the AI is..."
+                            className="w-full h-32 bg-neutral-900 border border-neutral-600 rounded px-4 py-3 text-sm focus:outline-none focus:border-emerald-500 transition-colors duration-200 resize-none"
+                        />
+                    </div>
+
                     {setupError && <div className="text-red-400 text-xs mb-4 text-center">{setupError}</div>}
                     <button 
                         type="submit" 
@@ -575,7 +602,8 @@ function App() {
                   )}
                   {msg.role === 'ai' ? (
                      <ReactMarkdown 
-                        remarkPlugins={[remarkGfm]}
+                        remarkPlugins={[remarkGfm, remarkMath]}
+                        rehypePlugins={[rehypeKatex]}
                         components={components}
                      >
                         {msg.text}

@@ -13,6 +13,7 @@ contextBridge.exposeInMainWorld('electron', {
     closeApp: () => ipcRenderer.send('close-app'),
     getApiKey: () => ipcRenderer.invoke('get-api-key'),
     saveApiKey: (key) => ipcRenderer.invoke('save-api-key', key),
+    getRole: () => ipcRenderer.invoke('get-role'),
     clearApiKey: () => ipcRenderer.invoke('clear-api-key'),
     setFocusable: (focusable) => ipcRenderer.invoke('set-focusable', focusable),
     onFocusChange: (callback) => {
