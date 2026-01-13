@@ -89,7 +89,7 @@ const TitleBar = ({
                 <button 
                     onClick={() => setIsSmartMode(!isSmartMode)} 
                     className={`flex items-center gap-1.5 text-[10px] px-2 py-1 rounded transition-all duration-200 ${isSmartMode ? 'bg-fuchsia-600 text-white shadow-[0_0_10px_rgba(192,38,211,0.4)]' : 'bg-neutral-700 text-neutral-400 hover:bg-neutral-600'}`}
-                    title="Smart Auto-Model"
+                 
                 >
                     <BrainIcon />
                     <span className="hidden sm:inline font-bold uppercase tracking-wider">{isSmartMode ? 'Smart select ON' : 'Smart select OFF'}</span>

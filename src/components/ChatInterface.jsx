@@ -8,6 +8,7 @@ import 'katex/dist/katex.min.css';
 import CodeBlock from './CodeBlock';
 import AutoResizeTextarea from './AutoResizeTextarea';
 import ResizeHandle from './ResizeHandle';
+import MeetingRecorder from './MeetingRecorder';
 import { SendIcon, CameraIcon, XIcon } from './Icons';
 
 const ChatInterface = ({
@@ -19,6 +20,7 @@ const ChatInterface = ({
     setAttachments,
     handleSend,
     handleCapture,
+    handleSendAudio,
     inputRef,
     selectedModel
 }) => {
@@ -97,6 +99,12 @@ const ChatInterface = ({
                         ))}
                     </div>
                 )}
+
+                 {/* Audio Recorder */}
+                <div className="absolute right-20 bottom-[2.29rem] z-20">
+                    <MeetingRecorder onRecordingComplete={handleSendAudio} />
+                </div>
+
                 <button
                     type="submit"
                     id="send-button"
@@ -104,11 +112,13 @@ const ChatInterface = ({
                 >
                     <SendIcon />
                 </button>
+                
+               
                 <button
                     type="button"
                     className="absolute right-5 bottom-[2.3rem] p-1 hover:bg-neutral-400/30 rounded-md text-neutral-400 hover:text-white transition-colors duration-200 z-10"
                     onClick={handleCapture}
-                    title="Capture Screen"
+                    
                 >
                     <CameraIcon />
                 </button>

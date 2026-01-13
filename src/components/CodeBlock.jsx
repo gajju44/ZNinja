@@ -18,7 +18,7 @@ const CodeBlock = ({ inline, className, children, ...props }) => {
         <button 
           onClick={handleCopy}
           className="absolute top-2 right-2 p-1.5 rounded-md bg-neutral-700/50 hover:bg-neutral-600 text-neutral-400 hover:text-white opacity-0 group-hover:opacity-100 transition-all duration-200 z-10"
-          title="Copy code"
+        
         >
           {isCopied ? <CheckIcon /> : <ClipboardIcon />}
         </button>

@@ -9,6 +9,8 @@ contextBridge.exposeInMainWorld('electron', {
     deleteSession: (sessionId) => ipcRenderer.invoke('delete-session', sessionId),
     clearAllSessions: () => ipcRenderer.invoke('clear-all-sessions'),
     captureScreen: () => ipcRenderer.invoke('capture-screen'),
+    getAudioSources: () => ipcRenderer.invoke('get-audio-sources'),
+    saveFile: (data) => ipcRenderer.invoke('save-file', data),
     minimize: () => ipcRenderer.send('minimize-app'),
     closeApp: () => ipcRenderer.send('close-app'),
     getApiKey: () => ipcRenderer.invoke('get-api-key'),

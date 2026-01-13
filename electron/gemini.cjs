@@ -52,15 +52,15 @@ async function listModels() {
 }
 
 // Ask Gemini
-async function askGemini({ prompt, modelName, images, image, history = [] }) {
+async function askGemini({ prompt, modelName, images, image, audioData, history = [] }) {
     let smartFallbacks = [];
     const isPro = await checkTierInternal();
 
     // --- SMART ROUTER LOGIC ---
     if (modelName === 'zninja-auto-smart') {
-        const lowerPrompt = prompt.toLowerCase();
+        const lowerPrompt = prompt ? prompt.toLowerCase() : '';
         const codingKeywords = ['code', 'fix', 'api', 'o(n)', 'implementation', 'logic', 'algorithm'];
-        const isComplex = image || codingKeywords.some(k => lowerPrompt.includes(k)) || prompt.length > 300;
+        const isComplex = image || audioData || codingKeywords.some(k => lowerPrompt.includes(k)) || (prompt && prompt.length > 300);
 
         if (isComplex) {
             console.log("ZNinja Router: Complex/Coding detected.");
@@ -91,7 +91,11 @@ async function askGemini({ prompt, modelName, images, image, history = [] }) {
         "gemini-1.5-flash"
     ].filter((v, i, a) => v && a.indexOf(v) === i);
 
-    const systemInstruction = getSystemInstruction();
+    const defaultSystemInstruction = getSystemInstruction();
+    // Override for Audio/Secretary Mode
+    const systemInstruction = audioData
+        ? "You are an expert executive secretary. Your goal is to create accurate, professional Minutes of Meeting from audio recordings. Output strictly the minutes, no code analysis or complexity metrics."
+        : defaultSystemInstruction;
 
     for (const modelId of modelFallbacks) {
         if (!modelId) continue;
@@ -107,7 +111,50 @@ async function askGemini({ prompt, modelName, images, image, history = [] }) {
             let result;
             const allImages = images || (image ? [image] : []);
 
-            if (allImages.length > 0) {
+            if (audioData) {
+                // Audio Mode (Minutes of Meeting)
+                const base64Data = audioData.split(',')[1];
+                const parts = audioData.split(';');
+                const mimeType = parts[0].split(':')[1] || 'audio/webm';
+
+                console.log(`Processing Audio. Mime: ${mimeType}`);
+
+                const textPrompt = prompt || `[SYSTEM: SECRETARY MODE]
+Generate a structured "Minutes of Meeting" from the audio.
+Include:
+1. 👥 Attendees (if inferred)
+2. 📝 Agenda/Topics
+3. ✅ Key Decisions
+4. 📌 Action Items (Who - What - When)
+5. ❓ Open Questions`;
+
+                const contentParts = [
+                    { text: textPrompt },
+                    {
+                        inlineData: {
+                            data: base64Data,
+                            mimeType: mimeType
+                        }
+                    }
+                ];
+
+                const genConfig = { maxOutputTokens: 65536 };
+                if (modelId.includes('thinking') || modelId.includes('gemini-3')) {
+                    genConfig.thinkingConfig = { includeThoughts: true, thinkingLevel: "HIGH" };
+                }
+
+                result = await model.generateContent({
+                    contents: [{ role: 'user', parts: contentParts }],
+                    generationConfig: genConfig,
+                    safetySettings: [
+                        { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+                        { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
+                        { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
+                        { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+                    ]
+                });
+
+            } else if (allImages.length > 0) {
                 // Single Turn with Image (+ Vision Chain-of-Thought)
                 const textPrompt = `[SYSTEM: VISION MODE ACTIVATED]
 1. TRANSCRIPT: First, strictly transcribe the full problem text from the images. Do not summarize.
@@ -160,7 +207,7 @@ ${prompt || "Solve this problem."}`;
                     ]
                 });
 
-                result = await chat.sendMessage(prompt);
+                result = await chat.sendMessage(prompt || ".");
             }
 
             const response = await result.response;

@@ -354,6 +354,43 @@ function App() {
     }
   };
 
+  const handleSendAudio = (audioBase64) => {
+      if (window.electron && window.electron.askGemini) {
+          if (!currentSessionId) setCurrentSessionId(Date.now().toString());
+          
+          setMessages(prev => [...prev, { 
+              role: 'user', 
+              text: '🎤 [Audio Recording]', 
+              audio: true // Marker for UI if needed
+          }]);
+
+          setMessages(prev => [...prev, { role: 'ai', text: '🎧 Listening and Transcribing...', isTemp: true }]);
+
+          const history = messages
+            .filter(m => !m.isTemp && m.role !== 'system')
+            .map(m => ({
+                role: m.role === 'ai' ? 'model' : 'user',
+                parts: [{ text: m.text }]
+            }));
+            
+          const actualModel = isSmartMode ? 'zninja-auto-smart' : selectedModel;
+
+          window.electron.askGemini({
+              prompt: '', // Backend provides default prompt for audio
+              modelName: actualModel,
+              audioData: audioBase64,
+              history: history
+          }).then(result => {
+              setMessages(prev => {
+                  const filtered = prev.filter(m => !m.isTemp);
+                  return result.success 
+                    ? [...filtered, { role: 'ai', text: result.text }]
+                    : [...filtered, { role: 'ai', text: `Error: ${result.error}` }];
+              });
+          });
+      }
+  };
+
 
 
 
@@ -422,6 +459,7 @@ function App() {
               setAttachments={setAttachments}
               handleSend={handleSend}
               handleCapture={handleCapture}
+              handleSendAudio={handleSendAudio}
               inputRef={inputRef}
               selectedModel={selectedModel}
           />

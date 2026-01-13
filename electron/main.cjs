@@ -1,4 +1,5 @@
-const { app, BrowserWindow, ipcMain, desktopCapturer, globalShortcut, clipboard } = require('electron');
+const { app, BrowserWindow, ipcMain, desktopCapturer, globalShortcut, clipboard, dialog } = require('electron');
+const fs = require('fs');
 const path = require('path');
 
 // --- Load Modules ---
@@ -93,6 +94,43 @@ function createWindow() {
             return { success: false, error: "No screen source found" };
         } catch (e) {
             console.error('Screen capture error:', e);
+            return { success: false, error: e.message };
+        }
+    });
+
+    ipcMain.handle('save-file', async (event, { buffer, defaultName }) => {
+        try {
+            const { filePath } = await dialog.showSaveDialog(win, {
+                defaultPath: defaultName || 'recording.webm',
+                filters: [{ name: 'Audio Files', extensions: ['webm', 'wav', 'mp3'] }]
+            });
+
+            if (filePath) {
+                // Convert base64 to buffer if needed, but here we expect base64 string
+                const data = Buffer.from(buffer.split(',')[1], 'base64');
+                fs.writeFileSync(filePath, data);
+                return { success: true, filePath };
+            }
+            return { success: false, error: 'Cancelled' };
+        } catch (e) {
+            console.error('Save file error:', e);
+            return { success: false, error: e.message };
+        }
+    });
+
+    ipcMain.handle('get-audio-sources', async () => {
+        try {
+            const sources = await desktopCapturer.getSources({ types: ['screen'] });
+            return {
+                success: true,
+                sources: sources.map(s => ({
+                    id: s.id,
+                    name: s.name,
+                    thumbnail: s.thumbnail.toDataURL()
+                }))
+            };
+        } catch (e) {
+            console.error('Audio source error:', e);
             return { success: false, error: e.message };
         }
     });
