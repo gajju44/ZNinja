@@ -1,74 +1,91 @@
-# 🥷 ZNinja - Service Host Runtime (v2.2.0)
+# 🥷 ZNinja - Service Host Runtime (v3.0.0)
 
-The ultimate stealth assistant. Designed to be invisible to monitoring software and seamless to use without ever leaving your browser.
+The ultimate stealth assistant. Designed to be invisible to monitoring software and seamless to use without ever leaving your browser. Now with multi-key rotation and specialized AI personas.
 
 ---
 
 ## 🚀 Key Features
 
 ### 1. 🌑 Stealth Mode (Ninja Mode)
-**Visual:** `[ 🥷 Stealth ON ]` (Emerald Button)
+- **Visual:** `[ 🥷 Stealth ON ]` (Emerald Button)
 - **What it does:** Makes the app completely invisible to screen recordings, Zoom, OBS, and proctoring software.
 - **Why use it:** You can see the AI, but they can't.
 
-### 2. 👻 Ghost Mode (Focus Lock)
-**Visual:** `[ 🤍 Ghost ON ]` (Indigo Button)
+### 2. 🧠 Dynamic Working Modes
+- **New:** Switch between specialized AI personas on the fly:
+  - **General**: Clear, concise, and direct answers.
+  - **Writing Code**: Production-ready, optimal logic (Java/Python focus).
+  - **Competitive Programming**: Optimal O(N) solutions with LeetCode-style structure. No fluff, no theory.
+  - **Quiz Answer**: Maximum speed and accuracy for multiple-choice or short questions.
+
+### 3. 🔑 Multi-Key Rotation Engine
+- **What it does:** Add multiple Gemini API keys in the Setup Screen. 
+- **Auto-Fallback:** If one key hits a **Quota Limit (429)** or **Permission Error (404)**, ZNinja automatically rotates to the next available key.
+- **Why use it:** Bypasses rate limits and ensures 100% uptime during critical tasks.
+
+### 4. 👻 Ghost Mode (Focus Lock)
 - **Shortcut:** `Ctrl + L`
-- **What it does:** Makes the window "click-through." You can click on the buttons in ZNinja, but the computer thinks you never left your browser.
+- **What it does:** Makes the window "click-through." You can interact with ZNinja, but your computer (and monitoring software) thinks you never left your browser.
 - **Why use it:** Prevents "Tab Changed" or "App Switched" alerts on exam websites.
 
-### 3. ⌨️ Ghost Typing (Background Input)
-**Visual:** `[ ⌨️ Type ON ]` (Amber Button)
-- **How it works:** When Ghost Mode is ON, this button appears.
-- **Action:** Click anywhere else (like your browser's search bar) and start typing using standard keys (A-Z, 0-9). Your text will appear in ZNinja automatically.
-- **Why use it:** Input questions into the AI without the AI window ever getting "Focus."
-
-### 4. 📸 Instant AI (Multi-Image Support)
+### 5. 📸 Instant AI (Vision Service)
 - **Shortcut:** `Ctrl + I`
-- **What it does:** Takes a silent screenshot and attaches it.
-- **New:** You can now capture **multiple screenshots** and send them all at once.
-- **Easy Flow:** Type a question -> `Ctrl + I` -> `Ctrl + I` (another one) -> Send.
+- **What it does:** Takes a silent screenshot and attaches it for analysis.
+- **New:** Supports **Multi-Turn Image Analysis**. Capture consecutive screenshots to solve multi-part problems.
 
-### 5. 📋 Clipboard Sync
-- **What it does:** Anything you copy (`Ctrl + C`) anywhere on your computer is automatically pasted into ZNinja's input box.
-
-### 6. 📝 Code Copy
-- **New:** Code blocks now have a copy button for one-click extraction.
+### 6. 🎙️ Meeting Recorder (MoM Mode)
+- **Feature:** Record audio and generate professional "Minutes of Meeting" (Attendees, Agenda, Decisions, Action Items).
+- **Stealth:** No tooltips or popups appear during recording to ensure clean screen capture.
 
 ---
 
 ## 🛠️ Advanced Stealth (Windows Only)
 
-- **Task Manager Hiding:** The app never appears in the "Apps" list. It stays hidden in **"Background processes"** as `Service Host Runtime`.
+- **Task Manager Hiding:** The app stays hidden in **"Background processes"** as `Service Host Runtime`.
 - **Taskbar Stealth:** No icon appears on the taskbar. 
-- **Silent Resizer:** Resize the window by dragging the bottom-right corner. The cursor **will not change** to the resize symbol (total stealth).
+- **Title-Free UI:** Tooltips and `title` attributes have been removed to prevent them from being captured in video recordings.
+- **Silent Resizer:** Resize the window by dragging the bottom-right corner without the cursor changing shape.
 
 ---
 
 ## 📦 How to Use
 
-1. **Setup:** Add your Gemini API Key in the `.env` file (`VITE_GEMINI=your_key`) or use the Setup Screen UI.
-2. **Launch:** Run `npm run dev`.
-3. **Show/Hide:** Use `Ctrl + ]` to instantly show or hide the entire window.
-4. **Resizing:** Look for the tiny lines at the bottom-right corner to drag and resize.
+### 🎮 For Users (Setup & Basics)
+1. **Launch**: Open the application (or run `npm run dev` in the folder).
+2. **Setup**: On the first screen, paste one or more **Google Gemini API Keys**.
+   - Get them for free here: [Google AI Studio](https://aistudio.google.com/app/apikey)
+3. **Controls**:
+   - `Ctrl + ]`: Instantly **Show/Hide** the entire window.
+   - `Ctrl + I`: Take an **Instant Screenshot** for the AI to analyze.
+   - `Ctrl + L`: Toggle **Ghost Mode** (Click-through stealth).
+4. **Resizing**: Drag the tiny lines at the bottom-right corner to resize (Cursor stays stealthy).
 
 ---
 
-## 💻 Tech Stack Refactoring (v2.2)
+### 🛠️ For Developers (Edit & Contribute)
+1. **Clone & Install**:
+   ```bash
+   git clone https://github.com/gajju44/ZNinja.git
+   cd Zninja
+   npm install
+   ```
+2. **Dev Environment**:
+   - Run `npm run dev` to start the Vite dev server and Electron.
+   - The app uses **Hot Module Replacement (HMR)** for the frontend.
+3. **Core Logic**:
+   - **AI Personas**: Edit `electron/gemini.cjs` to refine system instructions.
+   - **Stealth APIs**: Modify `electron/native.cjs` for Windows low-level hooks.
+   - **UI/UX**: Custom CSS and React components are in `src/`.
+4. **Build**: Run `npm run build` to generate the production-ready distribution.
 
-We have significantly modularized the codebase for easier maintenance:
+---
 
-### Frontend (`src/`)
-- **`SetupScreen`**: Configuration UI.
-- **`TitleBar`**: Window controls and mode toggles.
-- **`ChatHistorySidebar`**: Session management.
-- **`ChatInterface`**: Message list, attachments, and input area.
+## 💻 Tech Stack (v3.0)
 
-### Backend (`electron/`)
-- **`main.cjs`**: App lifecycle and orchestration.
-- **`native.js`**: Low-level Windows API bindings (Koffi).
-- **`config.js`**: Key and Session persistence.
-- **`gemini.js`**: AI Model routing and API logic.
+- **Frontend**: Vite + React + Vanilla CSS (Aesthetic Focus)
+- **Backend**: Electron (Main/Preload architecture)
+- **AI Engine**: Google Gemini (1.5 Pro, 1.5 Flash, Thinking 2.0 Fallbacks)
+- **Low-Level Native**: Koffi (C++ Bindings for Windows Stealth APIs)
 
 ---
 
