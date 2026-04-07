@@ -7,30 +7,49 @@ const configPath = path.join(app.getPath('userData'), 'config.json');
 const sessionsPath = path.join(app.getPath('userData'), 'chat-sessions.json');
 
 // --- API Key & Persona ---
-function getApiKey() {
+function getApiKeys() {
     try {
         if (fs.existsSync(configPath)) {
             const data = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-            if (data.apiKey) return data.apiKey;
+            if (data.apiKeys && Array.isArray(data.apiKeys)) return data.apiKeys;
+            if (data.apiKey) return [data.apiKey]; // Old format fallback
         }
     } catch (e) {
         console.error("Error reading config:", e);
     }
-    return process.env.VITE_GEMINI || null;
+    const envKey = process.env.VITE_GEMINI;
+    return envKey ? [envKey] : [];
 }
 
-function saveApiKey(key) {
+function getApiKey() {
+    const keys = getApiKeys();
+    return keys.length > 0 ? keys[0] : null;
+}
+
+function saveApiKey(payload) {
     try {
         let current = {};
         if (fs.existsSync(configPath)) {
             current = JSON.parse(fs.readFileSync(configPath, 'utf8'));
         }
-        // Support saving both key and role
-        if (typeof key === 'object') {
-            if (key.key) current.apiKey = key.key;
-            if (key.role) current.systemInstruction = key.role;
+        
+        // Support saving both key(s) and role
+        if (typeof payload === 'object' && !Array.isArray(payload)) {
+            if (payload.keys && Array.isArray(payload.keys)) {
+                current.apiKeys = payload.keys.filter(k => k && k.trim());
+                // For backward compatibility with older versions that look for 'apiKey'
+                if (current.apiKeys.length > 0) current.apiKey = current.apiKeys[0];
+            } else if (payload.key) {
+                current.apiKey = payload.key;
+                current.apiKeys = [payload.key];
+            }
+            if (payload.role) current.systemInstruction = payload.role;
+        } else if (Array.isArray(payload)) {
+            current.apiKeys = payload.filter(k => k && k.trim());
+            if (current.apiKeys.length > 0) current.apiKey = current.apiKeys[0];
         } else {
-            current.apiKey = key;
+            current.apiKey = payload;
+            current.apiKeys = [payload];
         }
 
         fs.writeFileSync(configPath, JSON.stringify(current, null, 2));
@@ -38,7 +57,6 @@ function saveApiKey(key) {
     } catch (e) {
         console.error("Error saving config:", e);
         return false;
-
     }
 }
 
@@ -129,6 +147,7 @@ function deleteSession(sessionId) {
 
 module.exports = {
     getApiKey,
+    getApiKeys,
     saveApiKey,
     clearApiKey,
     getSystemInstruction,

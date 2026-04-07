@@ -1,12 +1,5 @@
 const { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } = require("@google/generative-ai");
-const { getApiKey, getSystemInstruction } = require('./config.cjs');
-
-// Helper to get authorized client
-function getGenAI() {
-    const key = getApiKey();
-    if (!key) throw new Error("API Key not found");
-    return new GoogleGenerativeAI(key);
-}
+const { getApiKey, getApiKeys, getSystemInstruction } = require('./config.cjs');
 
 // Helper to detect if key is Paid (Placeholder)
 async function checkTierInternal() {
@@ -18,7 +11,8 @@ async function checkTierInternal() {
 async function listModels() {
     try {
         let models = [];
-        const apiKey = getApiKey();
+        const apiKeys = getApiKeys();
+        const apiKey = apiKeys.length > 0 ? apiKeys[0] : null;
         if (!apiKey) throw new Error("API Key not found");
 
         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
@@ -93,15 +87,13 @@ async function askGemini({ prompt, modelName, images, image, audioData, history 
 
     // --- SYSTEM INSTRUCTION LOGIC ---
     const MODE_INSTRUCTIONS = {
-        'general': `You are ZNinja, a helpful, versatile, and highly efficient AI assistant.
-**Goal:** Deliver clear, concise, and accurate answers.
+        'general': `You are ZNinja, a helpful and highly efficient assistant.
 **Output Format (STRICT):**
-- Direct answer/solution first.
-- Brief explanation or next steps only if necessary.
-- NO unnecessary conversational fluff (e.g., 'Sure, I can help with that').`,
+- Direct answer first.
+- Minimal explanation only if essential.
+- No conversational fillers.`,
+
         'code': `You are a Senior Software Engineer.
-**Goal:** Provide production-ready, well-documented, and efficient code solutions.
-**Operational Protocol:**
 **Goal:** Production-ready, optimal code.
 **Preferences:** Default to Java or Python unless context dictates otherwise.
 **Output Structure (STRICT):**
@@ -134,151 +126,138 @@ async function askGemini({ prompt, modelName, images, image, audioData, history 
         systemInstruction = MODE_INSTRUCTIONS[workingMode];
     }
 
+    const apiKeys = getApiKeys();
+    if (apiKeys.length === 0) {
+        return { success: false, error: "No API Keys configured. Please go to Setup." };
+    }
+
+    // --- EXECUTION LOOP (Models x Keys) ---
     for (const modelId of modelFallbacks) {
         if (!modelId) continue;
-        try {
-            console.log(`Attempting Gemini (${modelId})...`);
-            const genAI = getGenAI();
+        
+        for (let kIndex = 0; kIndex < apiKeys.length; kIndex++) {
+            const currentKey = apiKeys[kIndex];
+            
+            try {
+                console.log(`Attempting Gemini (${modelId}) with Key #${kIndex + 1}...`);
+                const genAI = new GoogleGenerativeAI(currentKey);
 
-            const model = genAI.getGenerativeModel({
-                model: modelId,
-                systemInstruction: systemInstruction
-            });
+                const model = genAI.getGenerativeModel({
+                    model: modelId,
+                    systemInstruction: systemInstruction
+                });
 
-            let result;
-            const allImages = images || (image ? [image] : []);
+                let result;
+                const allImages = images || (image ? [image] : []);
 
-            if (audioData) {
-                // Audio Mode (Minutes of Meeting)
-                const base64Data = audioData.split(',')[1];
-                const parts = audioData.split(';');
-                const mimeType = parts[0].split(':')[1] || 'audio/webm';
+                if (audioData) {
+                    // Audio Mode
+                    const base64Data = audioData.split(',')[1];
+                    const parts = audioData.split(';');
+                    const mimeType = parts[0].split(':')[1] || 'audio/webm';
 
-                console.log(`Processing Audio. Mime: ${mimeType}`);
+                    const textPrompt = prompt || `Prepare professional Minutes of Meeting from this audio.`;
 
-                const textPrompt = prompt || `[SYSTEM: SECRETARY MODE]
-Generate a structured "Minutes of Meeting" from the audio.
-Include:
-1. 👥 Attendees (if inferred)
-2. 📝 Agenda/Topics
-3. ✅ Key Decisions
-4. 📌 Action Items (Who - What - When)
-5. ❓ Open Questions`;
+                    const contentParts = [
+                        { text: textPrompt },
+                        { inlineData: { data: base64Data, mimeType: mimeType } }
+                    ];
 
-                const contentParts = [
-                    { text: textPrompt },
-                    {
-                        inlineData: {
-                            data: base64Data,
-                            mimeType: mimeType
-                        }
+                    const genConfig = { maxOutputTokens: 65536 };
+                    if (modelId.includes('thinking') || modelId.includes('gemini-3')) {
+                        genConfig.thinkingConfig = { includeThoughts: true, thinkingLevel: "HIGH" };
                     }
-                ];
 
-                const genConfig = { maxOutputTokens: 65536 };
-                if (modelId.includes('thinking') || modelId.includes('gemini-3')) {
-                    genConfig.thinkingConfig = { includeThoughts: true, thinkingLevel: "HIGH" };
-                }
-
-                result = await model.generateContent({
-                    contents: [{ role: 'user', parts: contentParts }],
-                    generationConfig: genConfig,
-                    safetySettings: [
-                        { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
-                        { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
-                        { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
-                        { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
-                    ]
-                });
-            } else if (allImages.length > 0) {
-                // Single Turn with Image (+ Vision Chain-of-Thought)
-                let visionInstructions = "Analyze the image and follow your system instructions.";
-                if (workingMode === 'competitive') {
-                    visionInstructions = "Strictly transcribe the problem from the image and solve it using the ZNinja Competitive Programming protocol.";
-                } else if (workingMode === 'quiz') {
-                    visionInstructions = "Directly solve the question in the image with maximum accuracy and no fluff.";
-                }
-
-                const visionPrompt = `[VISION SERVICE ACTIVE] ${visionInstructions}
-${prompt || ""}`;
-
-                const visionParts = [{ text: visionPrompt }];
-                allImages.forEach(img => {
-                    const base64Data = img.split(',')[1];
-                    visionParts.push({
-                        inlineData: {
-                            data: base64Data,
-                            mimeType: "image/png"
-                        }
+                    result = await model.generateContent({
+                        contents: [{ role: 'user', parts: contentParts }],
+                        generationConfig: genConfig,
+                        safetySettings: [
+                            { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+                            { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
+                            { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
+                            { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+                        ]
                     });
-                });
+                } else if (allImages.length > 0) {
+                    // Vision Mode
+                    let visionInstructions = "Analyze image directly.";
+                    if (workingMode === 'competitive') visionInstructions = "Solve the CP problem in the image.";
+                    else if (workingMode === 'quiz') visionInstructions = "Solve this quiz question.";
 
-                const visionConfig = { maxOutputTokens: 65536 };
-                if (modelId.includes('thinking') || modelId.includes('gemini-3')) {
-                    visionConfig.thinkingConfig = { includeThoughts: true, thinkingLevel: "HIGH" };
+                    const visionPrompt = `[VISION ACTIVE] ${visionInstructions}\n${prompt || ""}`;
+                    const visionParts = [{ text: visionPrompt }];
+                    allImages.forEach(img => {
+                        visionParts.push({ inlineData: { data: img.split(',')[1], mimeType: "image/png" } });
+                    });
+
+                    const visionConfig = { maxOutputTokens: 65536 };
+                    if (modelId.includes('thinking') || modelId.includes('gemini-3')) {
+                        visionConfig.thinkingConfig = { includeThoughts: true, thinkingLevel: "HIGH" };
+                    }
+
+                    result = await model.generateContent({
+                        contents: [{ role: 'user', parts: visionParts }],
+                        generationConfig: visionConfig,
+                        safetySettings: [
+                            { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+                            { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
+                            { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
+                            { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+                        ]
+                    });
+                } else {
+                    // Chat Mode
+                    const genConfig = { maxOutputTokens: 65536 };
+                    if (modelId.includes('thinking') || modelId.includes('gemini-3')) {
+                        genConfig.thinkingConfig = { includeThoughts: true, thinkingLevel: "HIGH" };
+                    }
+
+                    const chat = model.startChat({
+                        history: history,
+                        generationConfig: genConfig,
+                        safetySettings: [
+                            { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+                            { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
+                            { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
+                            { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+                        ]
+                    });
+
+                    result = await chat.sendMessage(prompt || ".");
                 }
 
-                result = await model.generateContent({
-                    contents: [{ role: 'user', parts: visionParts }],
-                    generationConfig: visionConfig,
-                    safetySettings: [
-                        { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
-                        { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
-                        { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
-                        { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
-                    ]
-                });
-            } else {
-                // Multi-turn Text Chat
-                const genConfig = { maxOutputTokens: 65536 };
-                if (modelId.includes('thinking') || modelId.includes('gemini-3')) {
-                    genConfig.thinkingConfig = { includeThoughts: true, thinkingLevel: "HIGH" };
+                const response = await result.response;
+                if (!response.candidates || response.candidates.length === 0) {
+                    throw new Error("Response blocked by safety filters.");
                 }
+                
+                const text = response.text();
+                return { success: true, text, usedModel: modelId };
 
-                const chat = model.startChat({
-                    history: history,
-                    generationConfig: genConfig,
-                    safetySettings: [
-                        { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
-                        { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
-                        { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
-                        { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
-                    ]
-                });
+            } catch (error) {
+                const errorMessage = error.message.toLowerCase();
+                const isRetryableError = 
+                    errorMessage.includes('429') || 
+                    errorMessage.includes('quota') || 
+                    errorMessage.includes('limit') ||
+                    errorMessage.includes('404') || 
+                    errorMessage.includes('not found') ||
+                    errorMessage.includes('unavailable') || 
+                    errorMessage.includes('overloaded') ||
+                    errorMessage.includes('503');
 
-                result = await chat.sendMessage(prompt || ".");
+                if (isRetryableError) {
+                    console.warn(`Key #${kIndex + 1} failed for ${modelId} (${error.message}). Checking next key...`);
+                    continue; // Try next API Key
+                }
+                
+                // If not retryable, or last key failed, move to next model fallback
+                console.error(`Fatal error for ${modelId} with Key #${kIndex + 1}:`, error.message);
+                break; 
             }
-
-            const response = await result.response;
-            if (response.promptFeedback && response.promptFeedback.blockReason) {
-                throw new Error(`Example of refusal: ${response.promptFeedback.blockReason}`);
-            }
-            if (!response.candidates || response.candidates.length === 0) {
-                throw new Error("Response blocked or empty (Safety Filter triggered).");
-            }
-            const text = response.text();
-            return { success: true, text, usedModel: modelId };
-
-        } catch (error) {
-            const isRetryable =
-                error.message.includes('404') ||
-                error.message.includes('not found') ||
-                error.message.includes('429') ||
-                error.message.includes('quota') ||
-                error.message.includes('limit') ||
-                error.message.includes('503') ||
-                error.message.includes('unavailable') ||
-                error.message.includes('overloaded');
-
-            if (isRetryable) {
-                console.warn(`${modelId} failed (Status: ${error.message}), trying next fallback...`);
-                continue;
-            }
-            console.error(`Error with ${modelId}:`, error.message);
-            return { success: false, error: error.message };
         }
     }
-    return { success: false, error: "All available models returned 404. Please check your API key permissions and region." };
+    return { success: false, error: "All API Keys and model fallbacks exhausted. Please check your network or quota." };
 }
 
 module.exports = {

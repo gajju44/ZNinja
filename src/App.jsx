@@ -30,7 +30,7 @@ function App() {
   
   const [isSetup, setIsSetup] = useState(false);
   const [checkingKey, setCheckingKey] = useState(true);
-  const [setupKey, setSetupKey] = useState('');
+  const [setupKeys, setSetupKeys] = useState(['']);
   const [setupError, setSetupError] = useState('');
   const [workingMode, setWorkingMode] = useState('general');
 
@@ -70,36 +70,34 @@ function App() {
   };
 
   const handleSaveKey = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     setSetupError('');
-    if (!setupKey.trim()) {
-        setSetupError('Please enter an API Key');
+    
+    const filteredKeys = setupKeys.filter(k => k && k.trim());
+    if (filteredKeys.length === 0) {
+        setSetupError('Please enter at least one API Key');
         return;
     }
     
-    
     if (window.electron && window.electron.saveApiKey) {
-        // Pass only key (backend handles default/mode-based roles now)
-        const success = await window.electron.saveApiKey({ key: setupKey.trim() });
+        const success = await window.electron.saveApiKey({ keys: filteredKeys });
         if (success) {
             setIsSetup(true);
             fetchModels();
         } else {
-            setSetupError('Failed to save API Key');
+            setSetupError('Failed to save API Keys');
         }
     }
   };
 
   useEffect(() => {
-    // Check for API Key
-    if (window.electron && window.electron.getApiKey) {
-        window.electron.getApiKey().then(key => {
-            if (key) {
+    // Check for API Keys
+    if (window.electron && window.electron.getApiKeys) {
+        window.electron.getApiKeys().then(keys => {
+            if (keys && keys.length > 0) {
+                setSetupKeys(keys);
                 setIsSetup(true);
-                // Initialize models only if key exists
                 fetchModels(); 
-            } else {
-                setIsSetup(false);
             }
             setCheckingKey(false);
         });
@@ -397,8 +395,8 @@ function App() {
   if (!isSetup) {
       return (
         <SetupScreen 
-            setupKey={setupKey} 
-            setSetupKey={setSetupKey} 
+            setupKeys={setupKeys} 
+            setSetupKeys={setSetupKeys} 
             setupError={setupError} 
             onSave={handleSaveKey} 
         />

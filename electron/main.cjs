@@ -68,6 +68,7 @@ function createWindow() {
     // Config & Sessions
     ipcMain.handle('save-api-key', (_, data) => config.saveApiKey(data));
     ipcMain.handle('get-api-key', () => config.getApiKey());
+    ipcMain.handle('get-api-keys', () => config.getApiKeys());
     ipcMain.handle('clear-api-key', () => config.clearApiKey());
     ipcMain.handle('get-role', () => config.getSystemInstruction());
 

@@ -14,6 +14,7 @@ contextBridge.exposeInMainWorld('electron', {
     minimize: () => ipcRenderer.send('minimize-app'),
     closeApp: () => ipcRenderer.send('close-app'),
     getApiKey: () => ipcRenderer.invoke('get-api-key'),
+    getApiKeys: () => ipcRenderer.invoke('get-api-keys'),
     saveApiKey: (key) => ipcRenderer.invoke('save-api-key', key),
     getRole: () => ipcRenderer.invoke('get-role'),
     clearApiKey: () => ipcRenderer.invoke('clear-api-key'),
