@@ -1,92 +1,100 @@
-# 🥷 ZNinja - Service Host Runtime (v3.0.0)
+# ZNinja - Service Host Runtime (v2.6.0)
 
-The ultimate stealth assistant. Designed to be invisible to monitoring software and seamless to use without ever leaving your browser. Now with multi-key rotation and specialized AI personas.
+A high-performance, minimalist AI companion built for stealth and efficiency. ZNinja operates as a background system process, providing seamless AI assistance across your entire Windows environment without leaving a trace in taskbars or screen recordings. Now featuring a specialized **Developer Mode** for real-time engine auditing and live-tuning.
 
 ---
 
-## 🚀 Key Features
+## Core Features
 
-### 1. 🌑 Stealth Mode (Ninja Mode)
-- **Visual:** `[ 🥷 Stealth ON ]` (Emerald Button)
-- **What it does:** Makes the app completely invisible to screen recordings, Zoom, OBS, and proctoring software.
-- **Why use it:** You can see the AI, but they can't.
+### 1. Advanced Stealth Architecture
+- **Process Masking:** Operates globally as `Service Host Runtime`.
+- **Screen Privacy:** Automatically excludes itself from screen captures, Zoom meetings, OBS recordings, and proctoring software.
+- **Taskbar-Free:** Runs as a background utility, leaving your taskbar clean.
+- **Frameless UI:** Minimalist, transparent interface with no OS-level window decorations.
 
-### 2. 🧠 Dynamic Working Modes
-- **New:** Switch between specialized AI personas on the fly:
-  - **General**: Clear, concise, and direct answers.
-  - **Writing Code**: Production-ready, optimal logic (Java/Python focus).
-  - **Competitive Programming**: Optimal O(N) solutions with LeetCode-style structure. No fluff, no theory.
-  - **Quiz Answer**: Maximum speed and accuracy for multiple-choice or short questions.
+### 2. Multi-Key Rotation Engine
+- **Resilient AI:** Configure multiple Google Gemini API keys to bypass rate limits.
+- **Auto-Fallback:** Automatically rotates between keys and model tiers (Flash ↔ Pro ↔ Thinking) when encountering Quota Limits (429) or Service Errors (404/503).
+- **Encrypted Storage:** API keys are secured using **Windows DPAPI** (via Electron SafeStorage) to ensure keys are only accessible by the service on your local machine.
 
-### 3. 🔑 Multi-Key Rotation Engine
-- **What it does:** Add multiple Gemini API keys in the Setup Screen. 
-- **Auto-Fallback:** If one key hits a **Quota Limit (429)** or **Permission Error (404)**, ZNinja automatically rotates to the next available key.
-- **Why use it:** Bypasses rate limits and ensures 100% uptime during critical tasks.
+### 3. Working Modes & Personas
+Switch between specialized personas to optimize output quality:
+- **General:** Concise, direct answers for daily tasks.
+- **Programming:** Production-ready code with logic summaries and O(N) complexity analysis.
+- **Competitive Programming:** Algorithmically optimal solutions tailored for LeetCode/Codeforces.
+- **Expert Tutor:** Fast, accurate explanations for quiz and academic questions.
 
-### 4. 👻 Ghost Mode (Focus Lock)
+### 4. Ghost Mode (Focus Lock)
 - **Shortcut:** `Ctrl + L`
-- **What it does:** Makes the window "click-through." You can interact with ZNinja, but your computer (and monitoring software) thinks you never left your browser.
-- **Why use it:** Prevents "Tab Changed" or "App Switched" alerts on exam websites.
+- **Utility:** Makes the window "click-through," allowing you to view AI responses while interacting with underlying applications (like browsers or IDEs) without losing focus.
+- **Ghost Typing:** Relays keyboard input directly through the assistant when focused.
 
-### 5. 📸 Instant AI (Vision Service)
-- **Shortcut:** `Ctrl + I`
-- **What it does:** Takes a silent screenshot and attaches it for analysis.
-- **New:** Supports **Multi-Turn Image Analysis**. Capture consecutive screenshots to solve multi-part problems.
-
-### 6. 🎙️ Meeting Recorder (MoM Mode)
-- **Feature:** Record audio and generate professional "Minutes of Meeting" (Attendees, Agenda, Decisions, Action Items).
-- **Stealth:** No tooltips or popups appear during recording to ensure clean screen capture.
+### 5. Intelligence Hub (Vision & Audio)
+- **Instant AI (`Ctrl + I`):** Captures the current screen silently and passes it to the AI for analysis. Supports multi-turn visual conversations.
+- **Meeting Recorder (MoM):** Record audio locally and generate professional Minutes of Meeting (Action items, decisions, and transcripts).
 
 ---
 
-## 🛠️ Advanced Stealth (Windows Only)
+## Essential Shortcuts
 
-- **Task Manager Hiding:** The app stays hidden in **"Background processes"** as `Service Host Runtime`.
-- **Taskbar Stealth:** No icon appears on the taskbar. 
-- **Title-Free UI:** Tooltips and `title` attributes have been removed to prevent them from being captured in video recordings.
-- **Silent Resizer:** Resize the window by dragging the bottom-right corner without the cursor changing shape.
-
----
-
-## 📦 How to Use
-
-### 🎮 For Users (Setup & Basics)
-1. **Launch**: Open the application (or run `npm run dev` in the folder).
-2. **Setup**: On the first screen, paste one or more **Google Gemini API Keys**.
-   - Get them for free here: [Google AI Studio](https://aistudio.google.com/app/apikey)
-3. **Controls**:
-   - `Ctrl + ]`: Instantly **Show/Hide** the entire window.
-   - `Ctrl + I`: Take an **Instant Screenshot** for the AI to analyze.
-   - `Ctrl + L`: Toggle **Ghost Mode** (Click-through stealth).
-4. **Resizing**: Drag the tiny lines at the bottom-right corner to resize (Cursor stays stealthy).
+| Shortcut | Action |
+| :--- | :--- |
+| **`Ctrl + ]`** | **Show / Hide** the entire application instantly |
+| **`Ctrl + L`** | Toggle **Ghost Mode** (Click-through / Focus Lock) |
+| **`Ctrl + I`** | Capture **Instant Screenshot** for analysis |
 
 ---
 
-### 🛠️ For Developers (Edit & Contribute)
-1. **Clone & Install**:
+## Getting Started
+
+### Installation
+- **Winget (Recommended):**
+  ```powershell
+  winget install gajju44.ZNinja
+  ```
+- **Direct Download:** Download the latest release from the [Releases](https://github.com/gajju44/ZNinja/releases) page and run the installer (`zninja.exe`).
+
+### Setup
+1. Upon first launch, navigate to **Setup** (Reset icon in TitleBar if already configured).
+2. Enter one or more [Gemini API Keys](https://aistudio.google.com/app/apikey).
+3. Toggle **Stealth Mode** (Ninja icon) to ensure invisibility during recordings.
+
+
+### Development Setup
+If you wish to contribute or build from source:
+
+1. **Clone & Install:**
    ```bash
    git clone https://github.com/gajju44/ZNinja.git
    cd Zninja
    npm install
    ```
-2. **Dev Environment**:
-   - Run `npm run dev` to start the Vite dev server and Electron.
-   - The app uses **Hot Module Replacement (HMR)** for the frontend.
-3. **Core Logic**:
-   - **AI Personas**: Edit `electron/gemini.cjs` to refine system instructions.
-   - **Stealth APIs**: Modify `electron/native.cjs` for Windows low-level hooks.
-   - **UI/UX**: Custom CSS and React components are in `src/`.
-4. **Build**: Run `npm run build` to generate the production-ready distribution.
+## 💻 The devMode System
+ZNinja includes a specialized **devMode** for real-time engine auditing and live-tuning of the stealth engine.
+
+### Developer CLI
+- `--setup`: Re-run the system configuration assistant.
+- `--version`: Display engine specifications.
+- `--help`: Display help menu.
+
+### Execution Scripts
+- `npm run dev`: Standard development launch.
+- `npm run dev:devMode`: Primary command for **devMode** + Stealth Audit.
 
 ---
 
-## 💻 Tech Stack (v3.0)
+## 🛠️ Internal devMode Logic
+- **HMR Bridging:** Uses **devMode** signals to bridge the gap between the pre-compiled Electron process and the Vite HMR environment.
+- **Stealth Audit Console:** Provides real-time metrics during **devMode** sessions to verify native Win32 window-affinity hooks.
+- **HMR Support:** Instant UI feedback without process restarts.
 
-- **Frontend**: Vite + React + Vanilla CSS & Tailwind CSS (Aesthetic Focus)
-- **Backend**: Electron (Main/Preload architecture)
-- **AI Engine**: Google Gemini (1.5 Pro, 1.5 Flash, Thinking 2.0 Fallbacks)
-- **Low-Level Native**: Koffi (C++ Bindings for Windows Stealth APIs)
+## Technical Blueprint
+- **Framework:** Electron + Vite + React
+- **Styling:** Vanilla CSS + Tailwind CSS (Glassmorphism & Ultra-Low Latency UI)
+- **Native Hooks & Security:** `koffi` (Win32 API bindings) + **Windows DPAPI** (Key Encryption)
+- **AI Backend:** Google Generative AI
 
 ---
 
-*Powered by Cinfinite | Developed by gajju44*
+*Built by the Unseen | Developed by <a href='https://gajendra-naphade.vercel.app/'> gajendra naphade</a>*
+
