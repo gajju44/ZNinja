@@ -1,0 +1,15 @@
+PackageIdentifier: gajju44.ZNinja
+PackageVersion: 2.6.0
+PackageLocale: en-US
+Publisher: gajju44
+PackageName: ZNinja
+License: Proprietary
+ShortDescription: Stealth system-level AI assistant.
+Moniker: zninja
+Tags:
+  - stealth
+  - ai
+  - gemini
+  - productivity
+ManifestType: defaultLocale
+ManifestVersion: 1.6.0
