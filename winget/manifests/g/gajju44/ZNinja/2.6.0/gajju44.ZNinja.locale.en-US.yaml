@@ -2,14 +2,25 @@ PackageIdentifier: gajju44.ZNinja
 PackageVersion: 2.6.0
 PackageLocale: en-US
 Publisher: gajju44
+PublisherUrl: https://github.com/Xyneris-tech
+PublisherSupportUrl: https://github.com/Xyneris-tech/ZNinja/issues
+PrivacyUrl: https://github.com/Xyneris-tech/ZNinja/blob/main/README.md
+Author: gajju44
 PackageName: ZNinja
-License: Proprietary
-ShortDescription: Stealth system-level AI assistant.
-Moniker: zninja
+PackageUrl: https://github.com/Xyneris-tech/ZNinja
+License: Apache-2.0
+LicenseUrl: https://github.com/Xyneris-tech/ZNinja/blob/main/LICENSE
+Copyright: Copyright (c) 2024 Xyneris Tech
+ShortDescription: Ai assistant that doesnt get captured by screen capturers
+Description: Zninja is a privacy-focused AI assistant that can be used for various tasks like meet capture,summaries,Minutes of meeting,notes and many more. without getting captured in screen recorders,screenshare and screenshots.
 Tags:
-  - stealth
-  - ai
-  - gemini
-  - productivity
+- ai
+- assistant
+- productivity
+- stealth
+- workflow
+- utility
+- developer-tools
+ReleaseNotesUrl: https://github.com/Xyneris-tech/ZNinja/releases/tag/v2.6.0
 ManifestType: defaultLocale
 ManifestVersion: 1.6.0
