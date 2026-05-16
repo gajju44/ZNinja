@@ -72,9 +72,15 @@ function createWindow() {
     // --- IPC Handlers ---
 
     // Config & Sessions
-    ipcMain.handle('save-api-key', (_, data) => {
+    ipcMain.handle('save-api-key', async (_, data) => {
         const success = config.saveApiKey(data);
         if (success) {
+            // Immediately fetch available models for this new key
+            const modelResult = await gemini.listModels();
+            if (modelResult.success) {
+                config.saveAvailableModels(modelResult.models);
+            }
+
             win.setResizable(true);
             win.setSize(600, 400);
             win.setResizable(false);
@@ -100,7 +106,15 @@ function createWindow() {
     ipcMain.handle('clear-all-sessions', async () => config.saveSessions([]));
 
     // Gemini
-    ipcMain.handle('list-models', async () => gemini.listModels());
+    ipcMain.handle('list-models', async () => {
+        // Try to get from local config first (Fast)
+        const storedModels = config.getAvailableModels();
+        if (storedModels && storedModels.length > 0) {
+            return { success: true, models: storedModels };
+        }
+        // Fallback to fresh fetch if none stored
+        return gemini.listModels();
+    });
     ipcMain.handle('ask-gemini', async (_, payload) => gemini.askGemini(payload));
     ipcMain.on('stream-gemini', async (event, payload) => {
         gemini.streamGemini(payload, {
